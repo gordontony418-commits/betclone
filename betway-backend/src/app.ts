@@ -107,8 +107,59 @@ export function createApp(): Application {
   app.use('/signalr',   createProxy({ pathPrefix: '/signalr',   target: config.SIGNALR_DOMAIN,    stripPrefix: '/signalr' }))
   app.use('/promoapi',  createProxy({ pathPrefix: '/promoapi',  target: config.PROMO_API_DOMAIN,  stripPrefix: '/promoapi' }))
 
-  // Locales config — intercept and blank out the mobile-number-used error message
-  // so it never appears in the registration form
+  // ── Critical config stubs — must come BEFORE the /config proxy ──────────────
+  // appsettings — the SPA crashes if this returns null/empty
+  app.get('/config/cron/appsettings/synapse/:country', async (req: Request, res: Response) => {
+    try {
+      const upstream = await fetch(
+        `https://config.betwayafrica.com/cron/appsettings/synapse/${req.params.country}`,
+        { signal: AbortSignal.timeout(8_000) }
+      )
+      if (upstream.ok) { res.setHeader('Content-Type','application/json'); res.send(await upstream.text()); return }
+    } catch { /* fall through to stub */ }
+    // Safe stub — all fields the SPA reads without null-checks
+    res.json({
+      countryCode: req.params.country ?? 'ZA',
+      currencyCode: 'ZAR',
+      twitterHandle: 'betway',
+      facebookUrl: 'https://www.facebook.com/betway',
+      instagramUrl: 'https://www.instagram.com/betway',
+      appAvailable: false,
+      androidAppUrl: '',
+      iosAppUrl: '',
+      huaweiAppUrl: '',
+      minDepositAmount: 10,
+      maxDepositAmount: 50000,
+      defaultBetSize: 10,
+      taxRate: 0,
+      supportEmail: 'support@betway.com',
+      supportPhone: '',
+      liveChatEnabled: false,
+      registrationEnabled: true,
+      loginEnabled: true,
+      depositEnabled: false,
+      withdrawEnabled: false,
+      kycEnabled: false,
+      responsibleGamblingUrl: '',
+      termsUrl: '/terms-and-conditions',
+      privacyUrl: '/privacy-policy',
+      brandId: 'bd66ebe1-080b-4455-9094-bf0464d4adbf',
+      theme: 'dark',
+      locale: 'en-US',
+      sports: [],
+      features: {},
+    })
+  })
+
+  // redirects stub
+  app.get('/config/cron/redirects/synapse/:country', (_req: Request, res: Response) => {
+    res.json({ redirects: [] })
+  })
+
+  // sitemaps stub
+  app.get('/config/cron/sitemaps/synapseV2/:country/:lang', (_req: Request, res: Response) => {
+    res.json({ sitemaps: [] })
+  })
   app.get('/config/cron/locales/synapse/:lang', async (req: Request, res: Response) => {
     try {
       const upstream = await fetch(
