@@ -91,6 +91,12 @@ export function patchIndexHtml(force = false): void {
     return patched
   })
 
+  // Fix relative ../cdn and ../cms paths in link/script tags — they break on web hosting
+  html = html.replace(/"\.\.\/(cdn\.betwayafrica\.com)/g, '"/$1')
+  html = html.replace(/'\.\.\/(cdn\.betwayafrica\.com)/g, "'/$1")
+  html = html.replace(/"\.\.\/(cms1\.betwayafrica\.com)/g, '"/$1')
+  html = html.replace(/'\.\.\/(cms1\.betwayafrica\.com)/g, "'/$1")
+
   // ── Inject CSS to hide deposit/withdraw UI ────────────────────────────────
   const DEPOSIT_HIDE_CSS = [
     '<style id="local-overrides">',
