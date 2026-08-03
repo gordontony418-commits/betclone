@@ -12,10 +12,23 @@ import { config } from './config'
 import { prisma }  from './db'
 import { createApp } from './app'
 import { patchIndexHtml } from './utils/patchIndexHtml'
+import { execSync } from 'child_process'
 
 let dbAvailable = true
 
 async function main(): Promise<void> {
+  // 1. Run migrations programmatically — works even if CLI env vars aren't set
+  try {
+    console.log('[server] 🔄  Running database migrations...')
+    execSync('npx prisma migrate deploy', {
+      stdio: 'inherit',
+      env: { ...process.env, DATABASE_URL: config.DATABASE_URL },
+      cwd: process.cwd(),
+    })
+    console.log('[server] ✅  Migrations complete')
+  } catch (err) {
+    console.warn('[server] ⚠️  Migration warning:', (err as Error).message)
+  }
   // 1. Connect to Prisma / SQLite
   try {
     await prisma.$connect()
