@@ -62,7 +62,7 @@ contentRouter.get('/', getContent)
 
 // ── /cms/gmapi/Content/cmsget/ — local-first, then upstream, then stale ──────
 contentRouter.get('/gmapi/Content/cmsget/', async (req: Request, res: Response): Promise<void> => {
-  const route = (req.query.route as string) ?? ''
+  const route = ((req.query.route as string) ?? '').replace('/TZ/', '/ZA/').replace('/OM/', '/ZA/')
   const lang  = (req.query.lang  as string) ?? 'en-US'
   const cacheKey = `cms-gmapi:${route}:${lang}`
 

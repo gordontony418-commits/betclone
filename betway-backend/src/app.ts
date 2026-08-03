@@ -102,10 +102,30 @@ export function createApp(): Application {
 
   // Generic proxies
   app.use('/api',       createProxy({ pathPrefix: '/api',       target: config.API_DOMAIN,        stripPrefix: '/api' }))
-  app.use('/apic',      createProxy({ pathPrefix: '/apic',      target: config.APIC_DOMAIN,       stripPrefix: '/apic' }))
+  // /apic proxy is AFTER our specific stubs below
   app.use('/casinoapi', createProxy({ pathPrefix: '/casinoapi', target: config.CASINO_API_DOMAIN, stripPrefix: '/casinoapi' }))
   app.use('/signalr',   createProxy({ pathPrefix: '/signalr',   target: config.SIGNALR_DOMAIN,    stripPrefix: '/signalr' }))
   app.use('/promoapi',  createProxy({ pathPrefix: '/promoapi',  target: config.PROMO_API_DOMAIN,  stripPrefix: '/promoapi' }))
+
+  // ── APIC stubs — must come BEFORE the /apic proxy ────────────────────────
+  app.get('/apic/v1/HomePage/HeaderTiles/:country', (_req: Request, res: Response) => {
+    res.json([
+      { name: 'sport',         order: 1,  pageRoute: '/sport',              imageGradient: '#00CF00,#018201' },
+      { name: 'live',          order: 2,  pageRoute: '/sport/live',         imageGradient: '#FF4500,#B22222' },
+      { name: 'casino',        order: 3,  pageRoute: '/lobby/casino-games', imageGradient: '#0066FF,#003D99' },
+      { name: 'aviator',       order: 4,  pageRoute: '/aviator',            imageGradient: '#FF6600,#CC4400' },
+      { name: 'live casino',   order: 5,  pageRoute: '/lobby/live-casino',  imageGradient: '#8B0000,#4B0000' },
+      { name: 'lucky numbers', order: 6,  pageRoute: '/lucky-numbers',      imageGradient: '#FFD700,#FFA500' },
+      { name: 'betgames',      order: 7,  pageRoute: '/betgames',           imageGradient: '#6A0DAD,#3D0066' },
+      { name: 'esports',       order: 8,  pageRoute: '/esports',            imageGradient: '#00BFFF,#0080FF' },
+      { name: 'virtuals',      order: 9,  pageRoute: '/virtuals',           imageGradient: '#32CD32,#006400' },
+      { name: 'promotions',    order: 10, pageRoute: '/promotions',         imageGradient: '#FFBE0C,#C28100' },
+    ])
+  })
+  app.get('/apic/v1/Toast/:country', (_req: Request, res: Response) => { res.json([]) })
+  app.get('/apic/v1/Toast', (_req: Request, res: Response) => { res.json([]) })
+  // Fallback apic proxy
+  app.use('/apic', createProxy({ pathPrefix: '/apic', target: config.APIC_DOMAIN, stripPrefix: '/apic' }))
 
   // ── Critical config stubs — must come BEFORE the /config proxy ──────────────
   // appsettings — always return ZA config regardless of country param
@@ -148,22 +168,6 @@ export function createApp(): Application {
       pageLinks: [],
       features: {},
     })
-  })
-
-  // ── HomePage HeaderTiles — nav items (Sport, Casino, Aviator, etc.) ──────────
-  app.get('/apic/v1/HomePage/HeaderTiles/:country', (_req: Request, res: Response) => {
-    res.json([
-      { name: 'sport',         order: 1,  pageRoute: '/sport',              imageGradient: '#00CF00,#018201' },
-      { name: 'live',          order: 2,  pageRoute: '/sport/live',         imageGradient: '#FF4500,#B22222' },
-      { name: 'casino',        order: 3,  pageRoute: '/lobby/casino-games', imageGradient: '#0066FF,#003D99' },
-      { name: 'aviator',       order: 4,  pageRoute: '/aviator',            imageGradient: '#FF6600,#CC4400' },
-      { name: 'live casino',   order: 5,  pageRoute: '/lobby/live-casino',  imageGradient: '#8B0000,#4B0000' },
-      { name: 'lucky numbers', order: 6,  pageRoute: '/lucky-numbers',      imageGradient: '#FFD700,#FFA500' },
-      { name: 'betgames',      order: 7,  pageRoute: '/betgames',           imageGradient: '#6A0DAD,#3D0066' },
-      { name: 'esports',       order: 8,  pageRoute: '/esports',            imageGradient: '#00BFFF,#0080FF' },
-      { name: 'virtuals',      order: 9,  pageRoute: '/virtuals',           imageGradient: '#32CD32,#006400' },
-      { name: 'promotions',    order: 10, pageRoute: '/promotions',         imageGradient: '#FFBE0C,#C28100' },
-    ])
   })
 
   // redirects stub
