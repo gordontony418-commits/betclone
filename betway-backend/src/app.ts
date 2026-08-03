@@ -108,39 +108,43 @@ export function createApp(): Application {
   app.use('/promoapi',  createProxy({ pathPrefix: '/promoapi',  target: config.PROMO_API_DOMAIN,  stripPrefix: '/promoapi' }))
 
   // ── Critical config stubs — must come BEFORE the /config proxy ──────────────
-  // appsettings — the SPA calls getCountryConfig and reads result[0] — ALWAYS return stub array
+  // appsettings — SPA reads config.countries[0], config.cultures[0], config.currencies[0]
   app.get('/config/cron/appsettings/synapse/:country', (req: Request, res: Response) => {
-    res.json([{
-      countryCode: req.params.country ?? 'ZA',
-      currencyCode: 'ZAR',
-      twitterHandle: 'betway',
-      facebookUrl: 'https://www.facebook.com/betway',
-      instagramUrl: 'https://www.instagram.com/betway',
-      appAvailable: false,
-      androidAppUrl: '',
-      iosAppUrl: '',
-      huaweiAppUrl: '',
-      minDepositAmount: 10,
-      maxDepositAmount: 50000,
-      defaultBetSize: 10,
-      taxRate: 0,
-      supportEmail: 'support@betway.com',
-      supportPhone: '',
-      liveChatEnabled: false,
-      registrationEnabled: true,
-      loginEnabled: true,
-      depositEnabled: false,
-      withdrawEnabled: false,
-      kycEnabled: false,
-      responsibleGamblingUrl: '',
-      termsUrl: '/terms-and-conditions',
-      privacyUrl: '/privacy-policy',
-      brandId: 'bd66ebe1-080b-4455-9094-bf0464d4adbf',
-      theme: 'dark',
-      locale: 'en-US',
-      sports: [],
+    const cc = req.params.country ?? 'ZA'
+    res.json({
+      countries: [{
+        countryCode: cc,
+        countryIsoTwo: cc,
+        countryName: cc === 'ZA' ? 'South Africa' : cc,
+        twitterHandle: 'betway',
+        facebookUrl: 'https://www.facebook.com/betway',
+        instagramUrl: 'https://www.instagram.com/betway_sa',
+        appAvailable: false,
+        androidAppUrl: '',
+        iosAppUrl: '',
+        huaweiAppUrl: '',
+        minDepositAmount: 10,
+        maxDepositAmount: 50000,
+        defaultBetSize: 10,
+        taxRate: 0,
+        supportEmail: 'support@betway.co.za',
+        supportPhone: '',
+        liveChatEnabled: true,
+        registrationEnabled: true,
+        loginEnabled: true,
+        depositEnabled: false,
+        withdrawEnabled: false,
+        kycEnabled: false,
+        responsibleGamblingUrl: 'https://responsiblegambling.org.za/',
+        termsUrl: '/terms-and-conditions',
+        privacyUrl: '/privacy-policy',
+        brandId: 'bd66ebe1-080b-4455-9094-bf0464d4adbf',
+      }],
+      cultures: [{ cultureCode: 'en-US', locale: 'en-US', language: 'English', isDefault: true }],
+      currencies: [{ currencyCode: 'ZAR', currencySymbol: 'R', isDefault: true }],
+      pageLinks: [],
       features: {},
-    }])
+    })
   })
 
   // redirects stub

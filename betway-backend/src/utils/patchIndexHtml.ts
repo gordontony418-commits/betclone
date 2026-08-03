@@ -60,23 +60,21 @@ export function patchIndexHtml(force = false): void {
   const backendUrl = config.BACKEND_URL
   const DOMAIN_MAP = buildDomainMap(backendUrl)
 
-  const bak = INDEX_HTML + '.bak'
+  const bak  = INDEX_HTML + '.bak'
+  const bak2 = INDEX_HTML + '.bak2'   // truly original — never overwritten
 
-  // Always restore from backup first so we patch against the original
-  if (fs.existsSync(bak)) {
-    const original = fs.readFileSync(bak, 'utf8')
-    // Check if already patched with the CURRENT url
-    const alreadyPatched = original.includes('id="local-overrides"')
-      ? false  // backup is clean original, always re-patch from it
-      : false
-    // Restore clean original before patching
-    fs.writeFileSync(INDEX_HTML, original, 'utf8')
-    console.log(`[patchIndexHtml] Restored clean original, patching for: ${backendUrl}`)
-  } else {
-    // First run — save backup of original
-    fs.writeFileSync(bak, fs.readFileSync(INDEX_HTML, 'utf8'), 'utf8')
-    console.log(`[patchIndexHtml] Backup written to ${bak}`)
+  // Use bak2 as the clean source if it exists, otherwise bak, otherwise current file
+  const cleanSource = fs.existsSync(bak2) ? bak2 : fs.existsSync(bak) ? bak : INDEX_HTML
+
+  // Save bak2 (clean original) on first run
+  if (!fs.existsSync(bak2)) {
+    fs.writeFileSync(bak2, fs.readFileSync(INDEX_HTML, 'utf8'), 'utf8')
+    console.log(`[patchIndexHtml] Clean backup written to ${bak2}`)
   }
+
+  // Always restore from the clean original before patching
+  fs.writeFileSync(INDEX_HTML, fs.readFileSync(cleanSource, 'utf8'), 'utf8')
+  console.log(`[patchIndexHtml] Restored clean original, patching for: ${backendUrl}`)
 
   let html = fs.readFileSync(INDEX_HTML, 'utf8')
 
@@ -96,6 +94,10 @@ export function patchIndexHtml(force = false): void {
   html = html.replace(/'\.\.\/(cdn\.betwayafrica\.com)/g, "'/$1")
   html = html.replace(/"\.\.\/(cms1\.betwayafrica\.com)/g, '"/$1')
   html = html.replace(/'\.\.\/(cms1\.betwayafrica\.com)/g, "'/$1")
+
+  // Replace any leftover localhost:PORT references with the real backend URL
+  // This covers cases where a previous patch already wrote localhost into the file
+  html = html.replace(/http:\/\/localhost:\d+/g, backendUrl)
 
   // ── Inject CSS to hide deposit/withdraw UI ────────────────────────────────
   const DEPOSIT_HIDE_CSS = [
