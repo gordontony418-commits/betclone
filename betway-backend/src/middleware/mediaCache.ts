@@ -80,19 +80,21 @@ async function downloadAndCache(originalUrl: string): Promise<{ localPath: strin
     const buffer = Buffer.from(await res.arrayBuffer())
     fs.writeFileSync(localPath, buffer)
 
-    // Record in DB
-    await prisma.mediaAsset.upsert({
-      where: { originalUrl },
-      update: { localPath, filename, mimeType, sizeBytes: buffer.length },
-      create: {
-        originalUrl,
-        localPath,
-        filename,
-        mimeType,
-        sizeBytes:    buffer.length,
-        category:     categoryFromMime(mimeType),
-      },
-    })
+    // Record in DB — ignore errors if table doesn't exist yet
+    try {
+      await prisma.mediaAsset.upsert({
+        where: { originalUrl },
+        update: { localPath, filename, mimeType, sizeBytes: buffer.length },
+        create: {
+          originalUrl,
+          localPath,
+          filename,
+          mimeType,
+          sizeBytes:    buffer.length,
+          category:     categoryFromMime(mimeType),
+        },
+      })
+    } catch { /* DB table may not exist yet — file is cached on disk anyway */ }
 
     console.log(`[mediaCache] ✅ Cached ${filename} (${buffer.length} bytes) from ${originalUrl}`)
     return { localPath, mimeType }
@@ -113,24 +115,40 @@ export function createMediaProxy(upstreamBase: string): Router {
     const subPath = req.path
     const originalUrl = `${upstreamBase}${subPath}${req.url.includes('?') ? '?' + req.url.split('?')[1] : ''}`
 
-    // 1. Check DB cache
+    // 1. Check filesystem cache first (skip DB — table may not exist)
+    try {
+      const filename = urlToFilename(originalUrl)
+      const localPath = path.join(UPLOADS_DIR, filename)
+      if (fs.existsSync(localPath)) {
+        const ext = path.extname(filename).toLowerCase()
+        const mimeMap: Record<string, string> = {
+          '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif',
+          '.woff': 'font/woff', '.woff2': 'font/woff2',
+        }
+        res.setHeader('Content-Type', mimeMap[ext] ?? 'application/octet-stream')
+        res.setHeader('Cache-Control', 'public, max-age=86400')
+        res.sendFile(localPath)
+        return
+      }
+    } catch { /* fall through */ }
+
+    // 2. Also try DB cache
     try {
       const cached = await prisma.mediaAsset.findUnique({ where: { originalUrl } })
       if (cached && fs.existsSync(cached.localPath)) {
         res.setHeader('Content-Type', cached.mimeType ?? 'application/octet-stream')
         res.setHeader('Cache-Control', 'public, max-age=86400')
-        res.setHeader('X-Served-By', 'betway-local-cache')
         res.sendFile(cached.localPath)
         return
       }
     } catch { /* DB unavailable — fall through to download */ }
 
-    // 2. Download from upstream
+    // 3. Download from upstream
     const result = await downloadAndCache(originalUrl)
     if (result) {
       res.setHeader('Content-Type', result.mimeType)
       res.setHeader('Cache-Control', 'public, max-age=86400')
-      res.setHeader('X-Served-By', 'betway-local-cache')
       res.sendFile(result.localPath)
     } else {
       res.status(404).json({ error: 'Media asset not found' })
