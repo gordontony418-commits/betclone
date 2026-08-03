@@ -16,7 +16,8 @@ import { Request, Response, NextFunction, Router } from 'express'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
-import { prisma } from '../db'
+
+// No DB import — media cache is filesystem-only
 
 // Where downloaded assets are stored on disk
 const UPLOADS_DIR = path.resolve(__dirname, '../../public/uploads')
@@ -80,22 +81,7 @@ async function downloadAndCache(originalUrl: string): Promise<{ localPath: strin
     const buffer = Buffer.from(await res.arrayBuffer())
     fs.writeFileSync(localPath, buffer)
 
-    // Record in DB — ignore errors if table doesn't exist yet
-    try {
-      await prisma.mediaAsset.upsert({
-        where: { originalUrl },
-        update: { localPath, filename, mimeType, sizeBytes: buffer.length },
-        create: {
-          originalUrl,
-          localPath,
-          filename,
-          mimeType,
-          sizeBytes:    buffer.length,
-          category:     categoryFromMime(mimeType),
-        },
-      })
-    } catch { /* DB table may not exist yet — file is cached on disk anyway */ }
-
+    // Record in DB — skip, filesystem-only mode
     console.log(`[mediaCache] ✅ Cached ${filename} (${buffer.length} bytes) from ${originalUrl}`)
     return { localPath, mimeType }
   } catch (err) {
@@ -133,18 +119,7 @@ export function createMediaProxy(upstreamBase: string): Router {
       }
     } catch { /* fall through */ }
 
-    // 2. Also try DB cache
-    try {
-      const cached = await prisma.mediaAsset.findUnique({ where: { originalUrl } })
-      if (cached && fs.existsSync(cached.localPath)) {
-        res.setHeader('Content-Type', cached.mimeType ?? 'application/octet-stream')
-        res.setHeader('Cache-Control', 'public, max-age=86400')
-        res.sendFile(cached.localPath)
-        return
-      }
-    } catch { /* DB unavailable — fall through to download */ }
-
-    // 3. Download from upstream
+    // 2. Download from upstream
     const result = await downloadAndCache(originalUrl)
     if (result) {
       res.setHeader('Content-Type', result.mimeType)

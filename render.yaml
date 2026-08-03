@@ -3,7 +3,7 @@ services:
     name: betway-clone
     runtime: node
     rootDir: betway-backend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install && rm -rf dist && npm run build
     startCommand: npm run start
     envVars:
       - key: NODE_ENV
