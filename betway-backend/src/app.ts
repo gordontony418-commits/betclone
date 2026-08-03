@@ -139,6 +139,7 @@ export function createApp(): Application {
         termsUrl: '/terms-and-conditions',
         privacyUrl: '/privacy-policy',
         brandId: 'bd66ebe1-080b-4455-9094-bf0464d4adbf',
+        regionCode: 'ZA',
       }],
       devConfig: { appAvailable: true, maintenanceMode: false },
       cultures: [{ cultureCode: 'en-US', locale: 'en-US', language: 'English', isDefault: true }],
