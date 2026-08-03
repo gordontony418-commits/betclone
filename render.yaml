@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: betway-clone
+    runtime: node
+    rootDir: betway-backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        value: file:/opt/render/project/src/betway-backend/prisma/betway.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        value: admin@betway2024
+      - key: SPORTS_DOMAIN
+        value: https://feeds-roa2.betwayafrica.com/br/_apis/sport
+      - key: BETTING_DOMAIN
+        value: https://api.betwayafrica.com
+      - key: AUTH_DOMAIN
+        value: https://auth.betwayafrica.com
+      - key: PLAYER_DOMAIN
+        value: https://player.betwayafrica.com
+      - key: CMS_DOMAIN
+        value: https://cms1.betwayafrica.com
+      - key: API_DOMAIN
+        value: https://api.betwayafrica.com/api
+      - key: APIC_DOMAIN
+        value: https://apic.betwayafrica.com/api
+      - key: CASINO_API_DOMAIN
+        value: https://casinoapi.betwayafrica.com/api
+      - key: CONFIG_DOMAIN
+        value: https://config.betwayafrica.com
+      - key: SIGNALR_DOMAIN
+        value: https://signalrapi.betwayafrica.com
+      - key: PROMO_API_DOMAIN
+        value: https://promoapi.betwayafrica.com
+    disk:
+      name: betway-data
+      mountPath: /opt/render/project/src/betway-backend/prisma
+      sizeGB: 1

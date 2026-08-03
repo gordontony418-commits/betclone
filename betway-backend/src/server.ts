@@ -26,8 +26,9 @@ async function main(): Promise<void> {
     dbAvailable = false
   }
 
-  // 2. Patch index.html
-  patchIndexHtml()
+  // 2. Patch index.html (force re-patch so Render URL is always current)
+  console.log(`[server] 🌍  Backend URL: ${config.BACKEND_URL}`)
+  patchIndexHtml(true)
 
   // 3. Start server
   const app = createApp()

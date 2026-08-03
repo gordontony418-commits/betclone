@@ -4,8 +4,8 @@
   "description": "Betway Nigeria backend — Prisma ORM, Express, SQLite",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/server.js",
+    "build": "prisma generate && tsc",
+    "start": "prisma migrate deploy && node dist/server.js",
     "dev": "ts-node src/server.ts",
     "test": "vitest run",
     "migrate": "prisma migrate dev --name init",

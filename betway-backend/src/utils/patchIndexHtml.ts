@@ -2,87 +2,85 @@
  * patchIndexHtml.ts
  *
  * Rewrites all external domain values inside `window.__NUXT__.config.public`
- * in www.betway.com.ng/index.html to point to the local backend.
+ * in www.betway.com.ng/index.html to point to the local/Render backend.
  *
  * - Creates a .bak backup before any modification
- * - Never touches _nuxt/ asset references
- * - Is idempotent: running twice produces the same result
+ * - Always re-patches on startup so Render URL is always current
  */
 
 import fs from 'fs'
 import path from 'path'
 import { config } from '../config'
 
-// All the domain keys from window.__NUXT__.config.public that need rewriting,
-// mapped to their local backend path equivalents.
-const DOMAIN_MAP: Record<string, string> = {
-  // Sports feed
-  'https://feeds-roa2.betwayafrica.com/br/_apis/sport': `${config.BACKEND_URL}/br/_apis/sport`,
-  // CMS / Kentico
-  'https://cms1.betwayafrica.com':  `${config.BACKEND_URL}/cms`,
-  'https//cms1.betwayafrica.com':   `${config.BACKEND_URL}/cms`,   // typo in original html
-  // API domains
-  'https://api.betwayafrica.com/api':       `${config.BACKEND_URL}/api`,
-  'https://apic.betwayafrica.com/api':      `${config.BACKEND_URL}/apic`,
-  'https://casinoapi.betwayafrica.com/api': `${config.BACKEND_URL}/casinoapi`,
-  'https://casinoapic.betwayafrica.com/api':`${config.BACKEND_URL}/casinoapi`,
-  'https://config.betwayafrica.com':        `${config.BACKEND_URL}/config`,
-  'https://signalrapi.betwayafrica.com':    `${config.BACKEND_URL}/signalr`,
-  'https://promoapi.betwayafrica.com':      `${config.BACKEND_URL}/promoapi`,
-  // Betting
-  'https://feeds-roa2.betwayafrica.com/br/_apis/public-hub': `${config.BACKEND_URL}/signalr`,
-  // Misc external domains that the frontend hits
-  'https://sports-client.betwayafrica.com': `${config.BACKEND_URL}/sports-client`,
-  'https://loyalty-external.betwayafrica.com': `${config.BACKEND_URL}/loyalty`,
-  'https://influencer-external-api.betwayafrica.com': `${config.BACKEND_URL}/influencer`,
-  'https://media.betwayafrica.com/': `${config.BACKEND_URL}/media`,
-  'https://jackpotza.ragingriver.io': `${config.BACKEND_URL}/jackpots-za`,
-  'https://casinobonusing.betwayafrica.com/api/': `${config.BACKEND_URL}/casino-bonus`,
-}
-
 const INDEX_HTML = path.resolve(
   __dirname,
   '../../../www.betway.com.ng/index.html'
 )
 
-export function patchIndexHtml(): void {
+function buildDomainMap(backendUrl: string): Record<string, string> {
+  return {
+    'https://feeds-roa2.betwayafrica.com/br/_apis/sport': `${backendUrl}/br/_apis/sport`,
+    'https://cms1.betwayafrica.com':  `${backendUrl}/cms`,
+    'https//cms1.betwayafrica.com':   `${backendUrl}/cms`,
+    'https://api.betwayafrica.com/api':       `${backendUrl}/api`,
+    'https://apic.betwayafrica.com/api':      `${backendUrl}/apic`,
+    'https://casinoapi.betwayafrica.com/api': `${backendUrl}/casinoapi`,
+    'https://casinoapic.betwayafrica.com/api':`${backendUrl}/casinoapi`,
+    'https://config.betwayafrica.com':        `${backendUrl}/config`,
+    'https://signalrapi.betwayafrica.com':    `${backendUrl}/signalr`,
+    'https://promoapi.betwayafrica.com':      `${backendUrl}/promoapi`,
+    'https://feeds-roa2.betwayafrica.com/br/_apis/public-hub': `${backendUrl}/signalr`,
+    'https://sports-client.betwayafrica.com': `${backendUrl}/sports-client`,
+    'https://loyalty-external.betwayafrica.com': `${backendUrl}/loyalty`,
+    'https://influencer-external-api.betwayafrica.com': `${backendUrl}/influencer`,
+    'https://media.betwayafrica.com/': `${backendUrl}/media`,
+    'https://jackpotza.ragingriver.io': `${backendUrl}/jackpots-za`,
+    'https://casinobonusing.betwayafrica.com/api/': `${backendUrl}/casino-bonus`,
+  }
+}
+
+export function patchIndexHtml(force = false): void {
   if (!fs.existsSync(INDEX_HTML)) {
     console.warn(`[patchIndexHtml] WARNING: index.html not found at ${INDEX_HTML} — skipping patch`)
     return
   }
 
-  let html = fs.readFileSync(INDEX_HTML, 'utf8')
+  // Build domain map fresh every time so RENDER_EXTERNAL_URL is always used
+  const backendUrl = config.BACKEND_URL
+  const DOMAIN_MAP = buildDomainMap(backendUrl)
 
-  // Check if already fully patched (idempotency guard)
-  if (html.includes('"http://localhost:4000/br/_apis/sport"') && html.includes('id="local-overrides"') && html.includes('id="local-reg-bypass"')) {
-    console.log('[patchIndexHtml] index.html already patched — skipping')
-    return
-  }
-
-  // Write backup only if it doesn't already exist
   const bak = INDEX_HTML + '.bak'
-  if (!fs.existsSync(bak)) {
-    fs.writeFileSync(bak, html, 'utf8')
+
+  // Always restore from backup first so we patch against the original
+  if (fs.existsSync(bak)) {
+    const original = fs.readFileSync(bak, 'utf8')
+    // Check if already patched with the CURRENT url
+    const alreadyPatched = original.includes('id="local-overrides"')
+      ? false  // backup is clean original, always re-patch from it
+      : false
+    // Restore clean original before patching
+    fs.writeFileSync(INDEX_HTML, original, 'utf8')
+    console.log(`[patchIndexHtml] Restored clean original, patching for: ${backendUrl}`)
+  } else {
+    // First run — save backup of original
+    fs.writeFileSync(bak, fs.readFileSync(INDEX_HTML, 'utf8'), 'utf8')
     console.log(`[patchIndexHtml] Backup written to ${bak}`)
   }
 
-  // Extract just the window.__NUXT__ script block so we only replace inside it
-  // and never touch _nuxt/ asset href/src attributes
-  const NUXT_SCRIPT_RE = /(window\.__NUXT__\s*=\s*\{[\s\S]*?\}\s*<\/script>)/
+  let html = fs.readFileSync(INDEX_HTML, 'utf8')
 
+  // Rewrite domains inside window.__NUXT__ block only
+  const NUXT_SCRIPT_RE = /(window\.__NUXT__\s*=\s*\{[\s\S]*?\}\s*<\/script>)/
   html = html.replace(NUXT_SCRIPT_RE, (scriptBlock) => {
     let patched = scriptBlock
     for (const [original, replacement] of Object.entries(DOMAIN_MAP)) {
-      // Escape for use in a string-literal context inside JSON
       const escaped = original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
       patched = patched.replace(new RegExp(escaped, 'g'), replacement)
     }
     return patched
   })
 
-  // ── Inject CSS to hide deposit/withdraw UI ──────────────────────────────────
-  // The deposit UI is baked into minified JS — the only way to suppress it
-  // without modifying _nuxt/ files is via a CSS override in the HTML.
+  // ── Inject CSS to hide deposit/withdraw UI ────────────────────────────────
   const DEPOSIT_HIDE_CSS = [
     '<style id="local-overrides">',
     '/* Hide deposit & withdrawal UI — feature disabled in local mode */',
@@ -102,7 +100,7 @@ export function patchIndexHtml(): void {
     html = html.replace('</head>', `${DEPOSIT_HIDE_CSS}\n</head>`)
   }
 
-  // ── Inject JS to bypass client-side registration validation ────────────────
+  // ── Inject JS to bypass client-side registration validation ──────────────
   const REG_BYPASS_JS = `<script id="local-reg-bypass">
 (function() {
   var STUB = ['doesUsername','doesEmail','doesMobile','doesUser','CheckMobile','ValidateMobile'];
@@ -158,6 +156,6 @@ export function patchIndexHtml(): void {
   }
 
   fs.writeFileSync(INDEX_HTML, html, 'utf8')
-  console.log('[patchIndexHtml] ✅  index.html patched — all API domains now point to', config.BACKEND_URL)
+  console.log('[patchIndexHtml] ✅  index.html patched — all API domains now point to', backendUrl)
   console.log('[patchIndexHtml] ✅  Deposit/withdraw UI suppressed via CSS override')
 }

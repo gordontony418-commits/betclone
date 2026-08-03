@@ -12,10 +12,17 @@ function getEnv(key: string, defaultValue: string): string {
   return value
 }
 
+// Auto-detect public URL — Render sets RENDER_EXTERNAL_URL automatically
+function getBackendUrl(): string {
+  if (process.env.RENDER_EXTERNAL_URL) return process.env.RENDER_EXTERNAL_URL
+  if (process.env.BACKEND_URL && !process.env.BACKEND_URL.includes('localhost')) return process.env.BACKEND_URL
+  return `http://localhost:${process.env.PORT ?? '4000'}`
+}
+
 export const config = {
   DATABASE_URL:    getEnv('DATABASE_URL',    'file:./prisma/betway.db'),
   PORT:            parseInt(getEnv('PORT',   '4000'), 10),
-  BACKEND_URL:     getEnv('BACKEND_URL',     'http://localhost:4000'),
+  BACKEND_URL:     getBackendUrl(),
   SPORTS_DOMAIN:   getEnv('SPORTS_DOMAIN',   'https://feeds-roa2.betwayafrica.com/br/_apis/sport'),
   AUTH_DOMAIN:     getEnv('AUTH_DOMAIN',     'https://api.betwayafrica.com'),
   PLAYER_DOMAIN:   getEnv('PLAYER_DOMAIN',   'https://api.betwayafrica.com'),
