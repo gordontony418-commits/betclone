@@ -17,3 +17,8 @@ betway-backend/.env
 # OS
 .DS_Store
 Thumbs.db
+
+# Force include all static frontend assets
+!www.betway.com.ng/**
+!cdn.betwayafrica.com/**
+!cms1.betwayafrica.com/**
