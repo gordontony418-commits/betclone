@@ -108,16 +108,8 @@ export function createApp(): Application {
   app.use('/promoapi',  createProxy({ pathPrefix: '/promoapi',  target: config.PROMO_API_DOMAIN,  stripPrefix: '/promoapi' }))
 
   // ── Critical config stubs — must come BEFORE the /config proxy ──────────────
-  // appsettings — the SPA calls getCountryConfig and reads result[0]
-  app.get('/config/cron/appsettings/synapse/:country', async (req: Request, res: Response) => {
-    try {
-      const upstream = await fetch(
-        `https://config.betwayafrica.com/cron/appsettings/synapse/${req.params.country}`,
-        { signal: AbortSignal.timeout(8_000) }
-      )
-      if (upstream.ok) { res.setHeader('Content-Type','application/json'); res.send(await upstream.text()); return }
-    } catch { /* fall through to stub */ }
-    // SPA reads [0].twitterHandle, [0].appAvailable etc — must be an ARRAY
+  // appsettings — the SPA calls getCountryConfig and reads result[0] — ALWAYS return stub array
+  app.get('/config/cron/appsettings/synapse/:country', (req: Request, res: Response) => {
     res.json([{
       countryCode: req.params.country ?? 'ZA',
       currencyCode: 'ZAR',
