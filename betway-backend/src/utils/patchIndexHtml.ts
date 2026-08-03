@@ -99,6 +99,9 @@ export function patchIndexHtml(force = false): void {
   // This covers cases where a previous patch already wrote localhost into the file
   html = html.replace(/http:\/\/localhost:\d+/g, backendUrl)
 
+  // Force defaultCountry to ZA so the SPA doesn't derive 'OM' from the Render hostname
+  html = html.replace(/"defaultCountry"\s*:\s*"[^"]*"/g, '"defaultCountry":"ZA"')
+
   // ── Inject CSS to hide deposit/withdraw UI ────────────────────────────────
   const DEPOSIT_HIDE_CSS = [
     '<style id="local-overrides">',

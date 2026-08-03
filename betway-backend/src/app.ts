@@ -108,18 +108,18 @@ export function createApp(): Application {
   app.use('/promoapi',  createProxy({ pathPrefix: '/promoapi',  target: config.PROMO_API_DOMAIN,  stripPrefix: '/promoapi' }))
 
   // ── Critical config stubs — must come BEFORE the /config proxy ──────────────
-  // appsettings — SPA reads config.countries[0], config.cultures[0], config.currencies[0]
-  app.get('/config/cron/appsettings/synapse/:country', (req: Request, res: Response) => {
-    const cc = req.params.country ?? 'ZA'
+  // appsettings — always return ZA config regardless of country param
+  // (hostname betclone-2.onrender.com ends in 'om' → detected as OM, so we ignore the param)
+  app.get('/config/cron/appsettings/synapse/:country', (_req: Request, res: Response) => {
     res.json({
       countries: [{
-        countryCode: cc,
-        countryIsoTwo: cc,
-        countryName: cc === 'ZA' ? 'South Africa' : cc,
+        countryCode: 'ZA',
+        countryIsoTwo: 'ZA',
+        countryName: 'South Africa',
         twitterHandle: 'betway',
         facebookUrl: 'https://www.facebook.com/betway',
         instagramUrl: 'https://www.instagram.com/betway_sa',
-        appAvailable: false,
+        appAvailable: true,
         androidAppUrl: '',
         iosAppUrl: '',
         huaweiAppUrl: '',
@@ -140,6 +140,7 @@ export function createApp(): Application {
         privacyUrl: '/privacy-policy',
         brandId: 'bd66ebe1-080b-4455-9094-bf0464d4adbf',
       }],
+      devConfig: { appAvailable: true, maintenanceMode: false },
       cultures: [{ cultureCode: 'en-US', locale: 'en-US', language: 'English', isDefault: true }],
       currencies: [{ currencyCode: 'ZAR', currencySymbol: 'R', isDefault: true }],
       pageLinks: [],
@@ -152,8 +153,11 @@ export function createApp(): Application {
     res.json({ redirects: [] })
   })
 
-  // sitemaps stub
+  // sitemaps stub — also handle undefined country
   app.get('/config/cron/sitemaps/synapseV2/:country/:lang', (_req: Request, res: Response) => {
+    res.json({ sitemaps: [] })
+  })
+  app.get('/config/cron/sitemaps/synapseV2/:country', (_req: Request, res: Response) => {
     res.json({ sitemaps: [] })
   })
   app.get('/config/cron/locales/synapse/:lang', async (req: Request, res: Response) => {
