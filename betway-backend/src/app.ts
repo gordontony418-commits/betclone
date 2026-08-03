@@ -163,6 +163,21 @@ export function createApp(): Application {
         // v2 — force rebuild
       }],
       devConfig: { appAvailable: true, maintenanceMode: false },
+      homepage: {
+        headerTiles: [
+          { name: 'home',         order: 0,  pageRoute: '/',                   icon: 'home',         imageGradient: '#1DB954,#148A3A' },
+          { name: 'sport',        order: 1,  pageRoute: '/sport',              icon: 'soccer',       imageGradient: '#00CF00,#018201' },
+          { name: 'live',         order: 2,  pageRoute: '/sport/live',         icon: 'live',         imageGradient: '#FF4500,#B22222' },
+          { name: 'casino',       order: 3,  pageRoute: '/lobby/casino-games', icon: 'casino',       imageGradient: '#0066FF,#003D99' },
+          { name: 'aviator',      order: 4,  pageRoute: '/aviator',            icon: 'aviator',      imageGradient: '#FF6600,#CC4400' },
+          { name: 'live casino',  order: 5,  pageRoute: '/lobby/live-casino',  icon: 'live-casino',  imageGradient: '#8B0000,#4B0000' },
+          { name: 'lucky numbers',order: 6,  pageRoute: '/lucky-numbers',      icon: 'lucky-numbers',imageGradient: '#FFD700,#FFA500' },
+          { name: 'betgames',     order: 7,  pageRoute: '/betgames',           icon: 'betgames',     imageGradient: '#6A0DAD,#3D0066' },
+          { name: 'esports',      order: 8,  pageRoute: '/esports',            icon: 'esports',      imageGradient: '#00BFFF,#0080FF' },
+          { name: 'virtuals',     order: 9,  pageRoute: '/virtuals',           icon: 'virtuals',     imageGradient: '#32CD32,#006400' },
+          { name: 'promotions',   order: 10, pageRoute: '/promotions',         icon: 'promotions',   imageGradient: '#FFBE0C,#C28100' },
+        ],
+      },
       cultures: [{ cultureCode: 'en-US', locale: 'en-US', language: 'English', isDefault: true }],
       currencies: [{ currencyCode: 'ZAR', currencySymbol: 'R', isDefault: true }],
       pageLinks: [],
