@@ -12,10 +12,21 @@ import fs from 'fs'
 import path from 'path'
 import { config } from '../config'
 
-const INDEX_HTML = path.resolve(
-  __dirname,
-  '../../../www.betway.com.ng/index.html'
-)
+// Find the monorepo root — same logic as static.ts
+function findRoot(): string {
+  const candidates = [
+    path.resolve(__dirname, '../../..'),
+    path.resolve(__dirname, '../..'),
+    process.cwd(),
+    path.resolve(process.cwd(), '..'),
+  ]
+  for (const candidate of candidates) {
+    if (fs.existsSync(path.join(candidate, 'www.betway.com.ng'))) return candidate
+  }
+  return path.resolve(__dirname, '../../..')
+}
+
+const INDEX_HTML = path.join(findRoot(), 'www.betway.com.ng', 'index.html')
 
 function buildDomainMap(backendUrl: string): Record<string, string> {
   return {

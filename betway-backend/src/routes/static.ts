@@ -10,8 +10,31 @@
 
 import express, { Router, Request, Response } from 'express'
 import path from 'path'
+import fs from 'fs'
 
-const ROOT = path.resolve(__dirname, '../../..')  // betway-clone/
+// Resolve the monorepo root — works for both local (dist/routes → ../../..)
+// and Render (rootDir: betway-backend, so static folders are siblings at ../)
+function findRoot(): string {
+  // Try going up from __dirname until we find www.betway.com.ng
+  const candidates = [
+    path.resolve(__dirname, '../../..'),   // local: src/routes/static.ts → betway-clone/
+    path.resolve(__dirname, '../..'),      // Render dist/routes → betway-backend/../ = betway-clone/
+    path.resolve(__dirname, '..'),
+    process.cwd(),
+    path.resolve(process.cwd(), '..'),
+  ]
+  for (const candidate of candidates) {
+    if (fs.existsSync(path.join(candidate, 'www.betway.com.ng'))) {
+      console.log(`[static] Root resolved to: ${candidate}`)
+      return candidate
+    }
+  }
+  // fallback
+  console.warn('[static] Could not find www.betway.com.ng — using default path')
+  return path.resolve(__dirname, '../../..')
+}
+
+const ROOT = findRoot()
 
 export const staticRouter: Router = Router()
 

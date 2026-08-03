@@ -19,8 +19,24 @@ export const contentRouter: Router = Router()
 const CMS_UPSTREAM_HOST = 'cms1.betwayafrica.com'
 const CMS_TTL_MS = 600_000  // 10 minutes
 
-// ── Local CMS JSON files (always served first, no upstream needed) ─────────────
-const LOCAL_CMS_DIR = path.resolve(__dirname, '../../')
+// Find monorepo root
+function findRoot(): string {
+  const candidates = [
+    path.resolve(__dirname, '../../..'),
+    path.resolve(__dirname, '../..'),
+    process.cwd(),
+    path.resolve(process.cwd(), '..'),
+  ]
+  for (const c of candidates) {
+    if (fs.existsSync(path.join(c, 'cms_home.json')) || fs.existsSync(path.join(c, 'betway-backend', 'cms_home.json'))) {
+      if (fs.existsSync(path.join(c, 'cms_home.json'))) return c
+      return path.join(c, 'betway-backend')
+    }
+  }
+  return path.resolve(__dirname, '../..')
+}
+
+const LOCAL_CMS_DIR = findRoot()
 
 function getLocalCms(route: string): string | null {
   // Map route patterns to local files
