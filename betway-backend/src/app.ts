@@ -108,7 +108,7 @@ export function createApp(): Application {
   app.use('/promoapi',  createProxy({ pathPrefix: '/promoapi',  target: config.PROMO_API_DOMAIN,  stripPrefix: '/promoapi' }))
 
   // ── Critical config stubs — must come BEFORE the /config proxy ──────────────
-  // appsettings — the SPA crashes if this returns null/empty
+  // appsettings — the SPA calls getCountryConfig and reads result[0]
   app.get('/config/cron/appsettings/synapse/:country', async (req: Request, res: Response) => {
     try {
       const upstream = await fetch(
@@ -117,8 +117,8 @@ export function createApp(): Application {
       )
       if (upstream.ok) { res.setHeader('Content-Type','application/json'); res.send(await upstream.text()); return }
     } catch { /* fall through to stub */ }
-    // Safe stub — all fields the SPA reads without null-checks
-    res.json({
+    // SPA reads [0].twitterHandle, [0].appAvailable etc — must be an ARRAY
+    res.json([{
       countryCode: req.params.country ?? 'ZA',
       currencyCode: 'ZAR',
       twitterHandle: 'betway',
@@ -148,7 +148,7 @@ export function createApp(): Application {
       locale: 'en-US',
       sports: [],
       features: {},
-    })
+    }])
   })
 
   // redirects stub
