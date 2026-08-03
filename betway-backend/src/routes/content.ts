@@ -62,9 +62,18 @@ contentRouter.get('/', getContent)
 
 // ── /cms/gmapi/Content/cmsget/ — local-first, then upstream, then stale ──────
 contentRouter.get('/gmapi/Content/cmsget/', async (req: Request, res: Response): Promise<void> => {
-  const route = ((req.query.route as string) ?? '').replace('/TZ/', '/ZA/').replace('/OM/', '/ZA/')
+  // Normalize any country code in the route to ZA — handles TZ, OM, NG etc.
+  const rawRoute = (req.query.route as string) ?? ''
+  const route = rawRoute === 'undefined' ? '' : rawRoute
+    .replace(/\/[A-Z]{2}\//g, '/ZA/')  // replace any 2-letter country code with ZA
   const lang  = (req.query.lang  as string) ?? 'en-US'
   const cacheKey = `cms-gmapi:${route}:${lang}`
+
+  // Skip if route is empty/undefined
+  if (!route) {
+    res.status(200).json({ content: '' })
+    return
+  }
 
   // 1. Serve from local JSON files first (fastest, always works)
   const local = getLocalCms(route)
