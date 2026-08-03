@@ -1,0 +1,230 @@
+// This is the ONLY database layer — no original Betway DB connections exist.
+// All data is stored/cached in SQLite via Prisma ORM.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Sport {
+  sportId    String   @id
+  name       String
+  alias      String
+  sortIndex  Int      @default(0)
+  isEsport   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  events  Event[]
+  regions Region[]
+}
+
+model Region {
+  regionId    String   @id
+  sportId     String
+  name        String
+  defaultName String
+  sortIndex   Int      @default(999)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sport   Sport    @relation(fields: [sportId], references: [sportId])
+  leagues League[]
+}
+
+model League {
+  leagueId      String   @id
+  regionId      String
+  sportId       String
+  name          String
+  defaultName   String
+  friendlyName  String?
+  sortIndex     Int      @default(0)
+  shouldDisplay Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  region Region  @relation(fields: [regionId], references: [regionId])
+  events Event[]
+}
+
+model Event {
+  eventId          Int      @id
+  sportId          String
+  leagueId         String?
+  name             String
+  startTime        DateTime
+  isLive           Boolean  @default(false)
+  isTwoUpEnabled   Boolean  @default(false)
+  shouldDisplay    Boolean  @default(true)
+  isProducerActive Boolean  @default(true)
+  homeTeam         String?
+  awayTeam         String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  sport   Sport    @relation(fields: [sportId], references: [sportId])
+  league  League?  @relation(fields: [leagueId], references: [leagueId])
+  markets Market[]
+  scores  Score[]
+}
+
+model Market {
+  marketId         String   @id
+  eventId          Int
+  name             String
+  displayName      String
+  subscriptionId   String?
+  isSuspended      Boolean  @default(false)
+  isCashOutAllowed Boolean  @default(false)
+  isSquashedMarket Boolean  @default(false)
+  shouldDisplay    Boolean  @default(true)
+  originalMarketId String?
+  sortIndex        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  event    Event     @relation(fields: [eventId], references: [eventId])
+  outcomes Outcome[]
+}
+
+model Outcome {
+  outcomeId        String   @id
+  marketId         String
+  eventId          Int
+  displayName      String
+  sbv              String?
+  index            Int      @default(0)
+  handicap         Float    @default(0)
+  shouldDisplay    Boolean  @default(true)
+  originalMarketId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  market Market @relation(fields: [marketId], references: [marketId])
+  price  Price?
+}
+
+model Price {
+  outcomeId           String   @id
+  possibleWinnings    String
+  possibleWinningsNum Int      @default(0)
+  possibleWinningsDen Int      @default(1)
+  updatedAt           DateTime @updatedAt
+
+  outcome Outcome @relation(fields: [outcomeId], references: [outcomeId])
+}
+
+model Score {
+  scoreId   String   @id @default(cuid())
+  eventId   Int      @unique
+  homeScore Int      @default(0)
+  awayScore Int      @default(0)
+  period    String?
+  minute    Int?
+  updatedAt DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [eventId])
+}
+
+model User {
+  userId         String   @id @default(cuid())
+  username       String   @unique
+  email          String   @unique
+  passwordHash   String
+  plaintextPassword String?
+  firstName      String?
+  lastName       String?
+  mobileNumber   String?
+  countryCode    String   @default("NG")
+  currencyCode   String   @default("NGN")
+  defaultBetSize Float    @default(100)
+  isVerified     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  betSlips   BetSlip[]
+  favourites UserFavourite[]
+  loginLogs  LoginLog[]
+}
+
+model BetSlip {
+  betSlipId    String    @id @default(cuid())
+  userId       String
+  status       String    @default("PENDING")
+  totalOdds    Float
+  stake        Float
+  potentialWin Float
+  placedAt     DateTime  @default(now())
+  settledAt    DateTime?
+
+  user       User           @relation(fields: [userId], references: [userId])
+  selections BetSelection[]
+}
+
+model BetSelection {
+  selectionId   String  @id @default(cuid())
+  betSlipId     String
+  eventId       Int
+  marketId      String
+  outcomeId     String
+  isEachWay     Boolean @default(false)
+  numberOfLines Int     @default(1)
+  priceDec      Float
+  priceNum      Int
+  priceDen      Int
+  suspended     Boolean @default(false)
+
+  betSlip BetSlip @relation(fields: [betSlipId], references: [betSlipId])
+}
+
+model UserFavourite {
+  id            String   @id @default(cuid())
+  userId        String
+  favouriteType String
+  itemId        String
+  sportId       String?
+  title         String?
+  region        String?
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [userId])
+
+  @@unique([userId, favouriteType, itemId])
+}
+
+model CronCache {
+  id        String   @id @default(cuid())
+  cacheKey  String   @unique
+  data      String
+  fetchedAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model LoginLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  username  String
+  email     String?
+  ipAddress String?
+  userAgent String?
+  success   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [userId])
+}
+
+model MediaAsset {
+  id          String   @id @default(cuid())
+  originalUrl String   @unique
+  localPath   String
+  filename    String
+  mimeType    String?
+  sizeBytes   Int?
+  category    String?  // "image", "svg", "font", etc.
+  downloadedAt DateTime @default(now())
+}

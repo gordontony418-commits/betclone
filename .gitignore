@@ -1,0 +1,19 @@
+# Dependencies
+betway-backend/node_modules/
+
+# Build output
+betway-backend/dist/
+
+# Environment / secrets
+betway-backend/.env
+
+# Databases
+**/*.db
+**/*.db-journal
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

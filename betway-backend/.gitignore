@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+prisma/betway.db
+prisma/betway.db-journal
+*.db
+*.db-journal
