@@ -124,8 +124,8 @@ export async function getSports(req: Request, res: Response): Promise<void> {
     return
   }
 
-  // 2. Fetch upstream
-  const url = `${config.SPORTS_DOMAIN}/cron/sports/${brand}/${locale}`
+  // 2. Fetch upstream — try config.betwayafrica.com first (accessible), fallback to sports domain
+  const url = `https://config.betwayafrica.com/cron/sports/${brand}/${locale}`
   const result = await fetchUpstream(url)
 
   if (!result.ok) {
@@ -211,7 +211,7 @@ export async function getEsports(req: Request, res: Response): Promise<void> {
     return
   }
 
-  const url = `${config.SPORTS_DOMAIN}/cron/esports/${brand}/${locale}`
+  const url = `https://config.betwayafrica.com/cron/esports/${brand}/${locale}`
   const result = await fetchUpstream(url)
 
   if (!result.ok) {

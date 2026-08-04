@@ -100,54 +100,30 @@ export function createApp(): Application {
   app.use('/appsynapse/auth',       authRouter)
   app.use('/appsynapse/player',     playerRouter)
 
-  // ── Casino widget (rowapi) — proxy and return empty stubs ────────────────
-  app.get('/casinowidget/api/v1/Banners/*', (_req: Request, res: Response) => { res.json([]) })
-  app.use('/casinowidget', createProxy({ pathPrefix: '/casinowidget', target: 'https://rowapic.gmgamingsystems.com', stripPrefix: '/casinowidget' }))
+  // ── Casino widget (rowapi) — return empty arrays (external domain, CORS blocked) ──
+  app.get('/casinowidget/*', (_req: Request, res: Response) => { res.json([]) })
 
-  // Generic proxies
-  app.use('/api',       createProxy({ pathPrefix: '/api',       target: config.API_DOMAIN,        stripPrefix: '/api' }))
-  // /apic proxy is AFTER our specific stubs below
-  // ── Casino API stubs — games, lobby, etc. ────────────────────────────────
-  app.get('/casinoapi/api/v*/Games*', (_req: Request, res: Response) => {
-    res.json({ games: [], totalCount: 0, pageSize: 20, pageIndex: 0 })
-  })
-  app.get('/casinoapi/api/v*/Lobby*', (_req: Request, res: Response) => {
-    res.json({ categories: [], games: [] })
-  })
-  app.get('/casinoapi/api/v*/Categories*', (_req: Request, res: Response) => {
-    res.json([])
-  })
-  // v4 Gaming endpoints — proxy to real casino API (may work from Render)
-  app.use('/casinoapi/v4', createProxy({ pathPrefix: '/casinoapi/v4', target: 'https://casinoapi.betwayafrica.com', stripPrefix: '/casinoapi/v4' }))
-  // V1 Widget endpoints — proxy to real casino API
-  app.use('/casinoapi/V1', createProxy({ pathPrefix: '/casinoapi/V1', target: 'https://casinoapi.betwayafrica.com', stripPrefix: '/casinoapi/V1' }))
-  // Catch-all for any other casinoapi — proxy to upstream
-  app.use('/casinoapi', createProxy({ pathPrefix: '/casinoapi', target: config.CASINO_API_DOMAIN, stripPrefix: '/casinoapi' }))
+  // ── Proxies — using REAL API URLs that work from Render ──────────────────
+  // casinoapi: works at casinoapi.betwayafrica.com/api/*
+  app.use('/casinoapi', createProxy({ pathPrefix: '/casinoapi', target: 'https://casinoapi.betwayafrica.com/api', stripPrefix: '/casinoapi' }))
+  // apic: works at apic.betwayafrica.com/api/*  
+  // casino-bonus: works
+  app.use('/casino-bonus', createMediaProxy('https://casinobonusing.betwayafrica.com'))
+  // signalr, promoapi — proxy (may not work but won't block page load)
   app.use('/signalr',   createProxy({ pathPrefix: '/signalr',   target: config.SIGNALR_DOMAIN,    stripPrefix: '/signalr' }))
   app.use('/promoapi',  createProxy({ pathPrefix: '/promoapi',  target: config.PROMO_API_DOMAIN,  stripPrefix: '/promoapi' }))
+  // api — blocked from Render, stub it
+  app.use('/api', (_req: Request, res: Response, next: NextFunction) => { next() })
 
-  // ── APIC stubs — must come BEFORE the /apic proxy ────────────────────────
-  app.get('/apic/v1/HomePage/HeaderTiles/:country', (_req: Request, res: Response) => {
-    res.json([
-      { name: 'sport',         order: 1,  pageRoute: '/sport',              imageGradient: '#00CF00,#018201' },
-      { name: 'live',          order: 2,  pageRoute: '/sport/live',         imageGradient: '#FF4500,#B22222' },
-      { name: 'casino',        order: 3,  pageRoute: '/lobby/casino-games', imageGradient: '#0066FF,#003D99' },
-      { name: 'aviator',       order: 4,  pageRoute: '/aviator',            imageGradient: '#FF6600,#CC4400' },
-      { name: 'live casino',   order: 5,  pageRoute: '/lobby/live-casino',  imageGradient: '#8B0000,#4B0000' },
-      { name: 'lucky numbers', order: 6,  pageRoute: '/lucky-numbers',      imageGradient: '#FFD700,#FFA500' },
-      { name: 'betgames',      order: 7,  pageRoute: '/betgames',           imageGradient: '#6A0DAD,#3D0066' },
-      { name: 'esports',       order: 8,  pageRoute: '/esports',            imageGradient: '#00BFFF,#0080FF' },
-      { name: 'virtuals',      order: 9,  pageRoute: '/virtuals',           imageGradient: '#32CD32,#006400' },
-      { name: 'promotions',    order: 10, pageRoute: '/promotions',         imageGradient: '#FFBE0C,#C28100' },
-    ])
-  })
+  // ── APIC stubs — only stub what's needed, let real API handle the rest ──────
+  // Toast stubs (undefined country)
   app.get('/apic/v1/Toast/:country', (_req: Request, res: Response) => { res.json([]) })
   app.get('/apic/v1/Toast', (_req: Request, res: Response) => { res.json([]) })
   app.get('/apic/v1/Promotions*', (_req: Request, res: Response) => { res.json([]) })
   app.get('/apic/v1/Jackpots*', (_req: Request, res: Response) => { res.json({ jackpots: [] }) })
   app.get('/apic/v1/WinBoost*', (_req: Request, res: Response) => { res.json({ WinBoostOffers: [] }) })
-  // Fallback apic proxy
-  app.use('/apic', createProxy({ pathPrefix: '/apic', target: config.APIC_DOMAIN, stripPrefix: '/apic' }))
+  // Real APIC proxy — apic.betwayafrica.com works from Render
+  app.use('/apic', createProxy({ pathPrefix: '/apic', target: 'https://apic.betwayafrica.com/api', stripPrefix: '/apic' }))
 
   // ── Critical config stubs — must come BEFORE the /config proxy ──────────────
   // appsettings — always return ZA config regardless of country param
