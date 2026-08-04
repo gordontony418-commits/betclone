@@ -12,21 +12,16 @@ import fs from 'fs'
 import path from 'path'
 import { config } from '../config'
 
-// Find the monorepo root — same logic as static.ts
-function findRoot(): string {
-  const candidates = [
-    path.resolve(__dirname, '../../..'),
-    path.resolve(__dirname, '../..'),
-    process.cwd(),
-    path.resolve(process.cwd(), '..'),
-  ]
-  for (const candidate of candidates) {
-    if (fs.existsSync(path.join(candidate, 'www.betway.com.ng'))) return candidate
-  }
-  return path.resolve(__dirname, '../../..')
+// Find the index.html — on Render it's in backendDir, locally in repoRoot
+function findIndexHtml(): string {
+  const backendDir = path.resolve(__dirname, '../..')
+  const repoRoot   = path.resolve(__dirname, '../../..')
+  const inBackend  = path.join(backendDir, 'www.betway.com.ng', 'index.html')
+  const inRepo     = path.join(repoRoot,   'www.betway.com.ng', 'index.html')
+  return fs.existsSync(inBackend) ? inBackend : inRepo
 }
 
-const INDEX_HTML = path.join(findRoot(), 'www.betway.com.ng', 'index.html')
+const INDEX_HTML = findIndexHtml()
 
 function buildDomainMap(backendUrl: string): Record<string, string> {
   return {

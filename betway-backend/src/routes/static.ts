@@ -12,30 +12,19 @@ import express, { Router, Request, Response } from 'express'
 import path from 'path'
 import fs from 'fs'
 
-// Resolve the monorepo root — works for both local (dist/routes → ../../..)
-// and Render (rootDir: betway-backend, so static folders are siblings at ../)
-function findRoot(): string {
-  // Try going up from __dirname until we find www.betway.com.ng
-  const candidates = [
-    path.resolve(__dirname, '../../..'),   // local: src/routes/static.ts → betway-clone/
-    path.resolve(__dirname, '../..'),      // Render dist/routes → betway-backend/../ = betway-clone/
-    path.resolve(__dirname, '..'),
-    process.cwd(),
-    path.resolve(process.cwd(), '..'),
-  ]
-  for (const candidate of candidates) {
-    if (fs.existsSync(path.join(candidate, 'www.betway.com.ng'))) {
-      console.log(`[static] Root resolved to: ${candidate}`)
-      return candidate
-    }
+// On Render: static files are copied into betway-backend/ during build via render.yaml
+// Locally: static files live in the repo root (parent of betway-backend)
+const backendDir = path.resolve(__dirname, '../..')   // betway-backend/ (compiled: dist/routes → ../..)
+const repoRoot   = path.resolve(__dirname, '../../..') // betway-clone/
+
+const ROOT = fs.existsSync(path.join(backendDir, 'www.betway.com.ng'))
+  ? backendDir   // Render: files copied here during build
+  : repoRoot     // Local: files in repo root
+
+console.log(`[static] Root resolved to: ${ROOT}`)
   }
   // fallback
   console.warn('[static] Could not find www.betway.com.ng — using default path')
-  return path.resolve(__dirname, '../../..')
-}
-
-const ROOT = findRoot()
-
 export const staticRouter: Router = Router()
 
 // ── CDN assets ───────────────────────────────────────────────────────────────
