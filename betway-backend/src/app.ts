@@ -163,6 +163,30 @@ export function createApp(): Application {
         // build v4
       }],
       devConfig: { appAvailable: true, maintenanceMode: false },
+      appSetting: {
+        CountryCode: 'ZA',
+        BrandId: 'bd66ebe1-080b-4455-9094-bf0464d4adbf',
+        CurrencySymbol: 'R',
+        MinimumBetAmount: 1,
+        MaximumPriceDecimal: 10000,
+        boostedOddsPercentage: 0,
+        JackpotSettings: null,
+        ResponsibleGamingSwitches: null,
+        TaxSettings: null,
+        FreeBetPayoutLimits: [],
+        PayoutLimits: [],
+        FeatureFlagsList: {
+          IsHomePageEnabled: true,
+          IsLoyaltyEnabled: false,
+          IsCustomHomePageEnabled: false,
+          IsAppsFlyerSmartBannerEnabled: false,
+          IsSumSubPasswordReset: false,
+          IsBetwayInsuranceEnabled: false,
+          IsTaxHidden: false,
+          ShowCountryFlag: false,
+          IsStreamingEnabled: false,
+        },
+      },
       homepage: {
         headerTiles: [
           { name: 'home',         order: 0,  pageRoute: '/',                   icon: 'home',         imageGradient: '#1DB954,#148A3A' },
@@ -205,9 +229,9 @@ export function createApp(): Application {
     { PN: 'Virtuals',      RURL: '/virtuals',           RE: '', A: 'virtuals',       PG: 'virtuals',      N: { top: true } },
     { PN: 'Promotions',    RURL: '/promotions',         RE: '', A: 'promotions',     PG: 'promotions',    N: { top: true } },
   ]
-  app.get('/config/cron/sitemaps/synapseV2/:country/:lang', (_req: Request, res: Response) => { res.json(SITEMAP_ITEMS) })
-  app.get('/config/cron/sitemaps/synapseV2/:country',       (_req: Request, res: Response) => { res.json(SITEMAP_ITEMS) })
-  app.get('/config/cron/sitemaps',                          (_req: Request, res: Response) => { res.json(SITEMAP_ITEMS) })
+  app.get('/config/cron/sitemaps/synapseV2/:country/:lang', (_req: Request, res: Response) => { res.json({ siteMap: [{ data: { sitemap: SITEMAP_ITEMS } }] }) })
+  app.get('/config/cron/sitemaps/synapseV2/:country',       (_req: Request, res: Response) => { res.json({ siteMap: [{ data: { sitemap: SITEMAP_ITEMS } }] }) })
+  app.get('/config/cron/sitemaps',                          (_req: Request, res: Response) => { res.json({ siteMap: [{ data: { sitemap: SITEMAP_ITEMS } }] }) })
   app.get('/config/cron/locales/synapse/:lang', async (req: Request, res: Response) => {
     try {
       const upstream = await fetch(
