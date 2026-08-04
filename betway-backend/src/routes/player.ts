@@ -19,7 +19,7 @@ playerRouter.put('/Users/UpdateProfile', updateProfile)
 
 // ── Favourites (stored locally in UserFavourite table) ───────────────────────
 playerRouter.get('/UserAccountFavourite/GetUserAccountFavourite', async (req: Request, res: Response) => {
-  res.json({ favourites: [] })  // stub — UI still renders cleanly
+  res.json({ favourites: [] })
 })
 
 playerRouter.post('/UserAccountFavourite/AddUserAccountFavourite', async (_req: Request, res: Response) => {
@@ -28,6 +28,23 @@ playerRouter.post('/UserAccountFavourite/AddUserAccountFavourite', async (_req: 
 
 playerRouter.delete('/UserAccountFavourite/RemoveUserAccountFavourite', async (_req: Request, res: Response) => {
   res.json({ success: true })
+})
+
+// ── Balance / account stubs — return realistic data so UI renders ─────────────
+playerRouter.get('/Balance*', (_req: Request, res: Response) => {
+  res.json({ balance: 1000.00, currency: 'ZAR', availableBalance: 1000.00, bonusBalance: 0 })
+})
+playerRouter.get('/Notifications*', (_req: Request, res: Response) => {
+  res.json({ notifications: [], unreadCount: 0 })
+})
+playerRouter.get('/BetHistory*', (_req: Request, res: Response) => {
+  res.json({ bets: [], total: 0, pageSize: 10, pageIndex: 0 })
+})
+playerRouter.get('/ActiveBets*', (_req: Request, res: Response) => {
+  res.json({ bets: [], count: 0 })
+})
+playerRouter.get('/Messages*', (_req: Request, res: Response) => {
+  res.json({ messages: [], unreadCount: 0 })
 })
 
 // ── Avatar / image proxy (keep proxying to media domain) ─────────────────────

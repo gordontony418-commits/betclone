@@ -106,14 +106,17 @@ export function createApp(): Application {
   // ── Proxies — using REAL API URLs that work from Render ──────────────────
   // casinoapi: works at casinoapi.betwayafrica.com/api/*
   app.use('/casinoapi', createProxy({ pathPrefix: '/casinoapi', target: 'https://casinoapi.betwayafrica.com/api', stripPrefix: '/casinoapi' }))
-  // apic: works at apic.betwayafrica.com/api/*  
-  // casino-bonus: works
+  // casino-bonus
   app.use('/casino-bonus', createMediaProxy('https://casinobonusing.betwayafrica.com'))
-  // signalr, promoapi — proxy (may not work but won't block page load)
+  // signalr
   app.use('/signalr',   createProxy({ pathPrefix: '/signalr',   target: config.SIGNALR_DOMAIN,    stripPrefix: '/signalr' }))
+  // promoapi — try real, falls back gracefully
   app.use('/promoapi',  createProxy({ pathPrefix: '/promoapi',  target: config.PROMO_API_DOMAIN,  stripPrefix: '/promoapi' }))
-  // api — blocked from Render, stub it
-  app.use('/api', (_req: Request, res: Response, next: NextFunction) => { next() })
+  // api.betwayafrica.com is geo-blocked from Render — return empty stubs
+  app.get('/api/v1/FeaturedBets*', (_req: Request, res: Response) => { res.json([]) })
+  app.get('/api/v1/Jackpot*', (_req: Request, res: Response) => { res.json({ jackpots: [] }) })
+  app.get('/api/v1/Sport*', (_req: Request, res: Response) => { res.json({}) })
+  app.use('/api', (_req: Request, res: Response) => { res.status(200).json({}) })
 
   // ── APIC stubs — only stub what's needed, let real API handle the rest ──────
   // Toast stubs (undefined country)
