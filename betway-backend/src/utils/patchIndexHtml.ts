@@ -102,6 +102,9 @@ export function patchIndexHtml(force = false): void {
   html = html.replace(/"avatarUrl"\s*:\s*"[^"]*"/g, '"avatarUrl":"https://kipem.betway.co.za"')
   // Direct string replace as fallback
   html = html.replace('kipem.betway.co.tz', 'kipem.betway.co.za')
+  // Route casino widget banners through our proxy so we can return empty arrays
+  html = html.replace(/https:\/\/rowapic\.gmgamingsystems\.com/g, `${backendUrl}/casinowidget`)
+  html = html.replace(/https:\/\/rowapi\.gmgamingsystems\.com/g, `${backendUrl}/casinowidget`)
   console.log('[patchIndexHtml] graphqlUrl patched to .co.za:', html.includes('kipem.betway.co.za/graphql'))
 
   // ── Inject CSS to hide deposit/withdraw UI ────────────────────────────────
@@ -149,6 +152,14 @@ export function patchIndexHtml(force = false): void {
     var u = typeof url==='string' ? url : (url&&url.url ? url.url : String(url));
     if (matchAny(u, STUB)) {
       return Promise.resolve(new Response('false', {status:200, headers:{'Content-Type':'application/json'}}));
+    }
+    // Intercept rowapi casino widget banners — return empty array so swiper doesn't crash
+    if (u.indexOf('rowapi') >= 0 || u.indexOf('rowapic') >= 0) {
+      return Promise.resolve(new Response('[]', {status:200, headers:{'Content-Type':'application/json'}}));
+    }
+    // Intercept gtm/tracking scripts — return empty
+    if (u.indexOf('gtm.js') >= 0 || u.indexOf('googletagmanager') >= 0) {
+      return Promise.resolve(new Response('', {status:200, headers:{'Content-Type':'application/javascript'}}));
     }
     return _fetch.apply(this, arguments).then(function(res) {
       if (matchAny(u, SAVE)) { res.clone().json().then(saveUser).catch(function(){}); }

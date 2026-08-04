@@ -100,6 +100,10 @@ export function createApp(): Application {
   app.use('/appsynapse/auth',       authRouter)
   app.use('/appsynapse/player',     playerRouter)
 
+  // ── Casino widget (rowapi) — proxy and return empty stubs ────────────────
+  app.get('/casinowidget/api/v1/Banners/*', (_req: Request, res: Response) => { res.json([]) })
+  app.use('/casinowidget', createProxy({ pathPrefix: '/casinowidget', target: 'https://rowapic.gmgamingsystems.com', stripPrefix: '/casinowidget' }))
+
   // Generic proxies
   app.use('/api',       createProxy({ pathPrefix: '/api',       target: config.API_DOMAIN,        stripPrefix: '/api' }))
   // /apic proxy is AFTER our specific stubs below
