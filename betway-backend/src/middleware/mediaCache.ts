@@ -20,7 +20,10 @@ import crypto from 'crypto'
 // No DB import — media cache is filesystem-only
 
 // Where downloaded assets are stored on disk
-const UPLOADS_DIR = path.resolve(__dirname, '../../public/uploads')
+// On Render, use the persistent disk mount path; locally use public/uploads
+const UPLOADS_DIR = process.env.RENDER
+  ? '/opt/render/project/src/betway-backend/public/uploads'
+  : path.resolve(__dirname, '../../public/uploads')
 
 // Ensure uploads directory exists
 if (!fs.existsSync(UPLOADS_DIR)) {

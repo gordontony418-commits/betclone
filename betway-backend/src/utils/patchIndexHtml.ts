@@ -105,6 +105,9 @@ export function patchIndexHtml(force = false): void {
   // Fix graphqlUrl — SPA derives brand/country from this domain (.co.tz → TZ, .co.za → ZA)
   html = html.replace(/"graphqlUrl"\s*:\s*"[^"]*"/g, '"graphqlUrl":"https://kipem.betway.co.za/graphql"')
   html = html.replace(/"avatarUrl"\s*:\s*"[^"]*"/g, '"avatarUrl":"https://kipem.betway.co.za"')
+  // Direct string replace as fallback
+  html = html.replace('kipem.betway.co.tz', 'kipem.betway.co.za')
+  console.log('[patchIndexHtml] graphqlUrl patched to .co.za:', html.includes('kipem.betway.co.za/graphql'))
 
   // ── Inject CSS to hide deposit/withdraw UI ────────────────────────────────
   const DEPOSIT_HIDE_CSS = [
