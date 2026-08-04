@@ -128,6 +128,9 @@ export function createApp(): Application {
   })
   app.get('/apic/v1/Toast/:country', (_req: Request, res: Response) => { res.json([]) })
   app.get('/apic/v1/Toast', (_req: Request, res: Response) => { res.json([]) })
+  app.get('/apic/v1/Promotions*', (_req: Request, res: Response) => { res.json([]) })
+  app.get('/apic/v1/Jackpots*', (_req: Request, res: Response) => { res.json({ jackpots: [] }) })
+  app.get('/apic/v1/WinBoost*', (_req: Request, res: Response) => { res.json({ WinBoostOffers: [] }) })
   // Fallback apic proxy
   app.use('/apic', createProxy({ pathPrefix: '/apic', target: config.APIC_DOMAIN, stripPrefix: '/apic' }))
 
@@ -371,6 +374,12 @@ export function createApp(): Application {
 
   // Serve locally cached uploads
   app.get('/uploads/:filename', serveUploads)
+
+  // Tracking scripts — return empty JS so they don't crash
+  app.get('/tracking/*', (_req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'application/javascript')
+    res.send('/* tracking disabled in local mode */')
+  })
 
   app.use('/api', noUpstreamHandler)
 
