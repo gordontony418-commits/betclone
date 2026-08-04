@@ -129,11 +129,66 @@ export async function getSports(req: Request, res: Response): Promise<void> {
   const result = await fetchUpstream(url)
 
   if (!result.ok) {
-    // 3. Return stale cache or 503
+    // 3. Return stale cache or local DB data
     const stale = await getStaleCache(cacheKey)
     if (stale) {
       res.json(JSON.parse(stale))
-    } else {
+      return
+    }
+    // Fall back to local DB — build sports response from seeded data
+    try {
+      const sports = await prisma.sport.findMany({
+        where: { isEsport: false },
+        orderBy: { sortIndex: 'asc' },
+        include: {
+          regions: {
+            orderBy: { sortIndex: 'asc' },
+            include: {
+              leagues: {
+                orderBy: { sortIndex: 'asc' },
+              },
+            },
+          },
+        },
+      })
+      const events = await prisma.event.findMany({
+        where: { shouldDisplay: true, isProducerActive: true },
+        orderBy: { startTime: 'asc' },
+        take: 50,
+      })
+      const localData = {
+        sports: sports.map(s => ({
+          sportId: s.sportId,
+          name: s.name,
+          alias: s.alias,
+          sortIndex: s.sortIndex,
+          regions: s.regions.map(r => ({
+            regionId: r.regionId,
+            name: r.name,
+            defaultName: r.defaultName,
+            sortIndex: r.sortIndex,
+            leagues: r.leagues.map(l => ({
+              leagueId: l.leagueId,
+              name: l.name,
+              defaultName: l.defaultName,
+              friendlyName: l.friendlyName,
+              sortIndex: l.sortIndex,
+            })),
+          })),
+        })),
+        events: events.map(e => ({
+          eventId: e.eventId,
+          sportId: e.sportId,
+          leagueId: e.leagueId,
+          name: e.name,
+          homeTeam: e.homeTeam,
+          awayTeam: e.awayTeam,
+          startTime: e.startTime.toISOString(),
+          isLive: e.isLive,
+        })),
+      }
+      res.json(localData)
+    } catch {
       res.status(503).json({ error: 'Upstream unavailable', cached: false })
     }
     return

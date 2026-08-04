@@ -117,20 +117,10 @@ export function createApp(): Application {
   app.get('/casinoapi/api/v*/Categories*', (_req: Request, res: Response) => {
     res.json([])
   })
-  // v4 Gaming endpoints
-  app.get('/casinoapi/v4/Gaming/Game/Categories', (_req: Request, res: Response) => {
-    res.json({ categories: [], games: [], totalCount: 0 })
-  })
-  app.get('/casinoapi/v4/Gaming/Game*', (_req: Request, res: Response) => {
-    res.json({ games: [], totalCount: 0, pageSize: 20, pageIndex: 0 })
-  })
-  // V1 Widget endpoints
-  app.get('/casinoapi/V1/Widget/WinnerCircle', (_req: Request, res: Response) => {
-    res.json({ winners: [] })
-  })
-  app.get('/casinoapi/V1/Widget*', (_req: Request, res: Response) => {
-    res.json({})
-  })
+  // v4 Gaming endpoints — proxy to real casino API (may work from Render)
+  app.use('/casinoapi/v4', createProxy({ pathPrefix: '/casinoapi/v4', target: 'https://casinoapi.betwayafrica.com', stripPrefix: '/casinoapi/v4' }))
+  // V1 Widget endpoints — proxy to real casino API
+  app.use('/casinoapi/V1', createProxy({ pathPrefix: '/casinoapi/V1', target: 'https://casinoapi.betwayafrica.com', stripPrefix: '/casinoapi/V1' }))
   // Catch-all for any other casinoapi — proxy to upstream
   app.use('/casinoapi', createProxy({ pathPrefix: '/casinoapi', target: config.CASINO_API_DOMAIN, stripPrefix: '/casinoapi' }))
   app.use('/signalr',   createProxy({ pathPrefix: '/signalr',   target: config.SIGNALR_DOMAIN,    stripPrefix: '/signalr' }))
