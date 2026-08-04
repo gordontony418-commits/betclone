@@ -117,6 +117,21 @@ export function createApp(): Application {
   app.get('/casinoapi/api/v*/Categories*', (_req: Request, res: Response) => {
     res.json([])
   })
+  // v4 Gaming endpoints
+  app.get('/casinoapi/v4/Gaming/Game/Categories', (_req: Request, res: Response) => {
+    res.json({ categories: [], games: [], totalCount: 0 })
+  })
+  app.get('/casinoapi/v4/Gaming/Game*', (_req: Request, res: Response) => {
+    res.json({ games: [], totalCount: 0, pageSize: 20, pageIndex: 0 })
+  })
+  // V1 Widget endpoints
+  app.get('/casinoapi/V1/Widget/WinnerCircle', (_req: Request, res: Response) => {
+    res.json({ winners: [] })
+  })
+  app.get('/casinoapi/V1/Widget*', (_req: Request, res: Response) => {
+    res.json({})
+  })
+  // Catch-all for any other casinoapi — proxy to upstream
   app.use('/casinoapi', createProxy({ pathPrefix: '/casinoapi', target: config.CASINO_API_DOMAIN, stripPrefix: '/casinoapi' }))
   app.use('/signalr',   createProxy({ pathPrefix: '/signalr',   target: config.SIGNALR_DOMAIN,    stripPrefix: '/signalr' }))
   app.use('/promoapi',  createProxy({ pathPrefix: '/promoapi',  target: config.PROMO_API_DOMAIN,  stripPrefix: '/promoapi' }))
@@ -390,6 +405,11 @@ export function createApp(): Application {
     // Return a simple placeholder SVG so no broken icons appear
     res.setHeader('Content-Type', 'image/svg+xml')
     res.send('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#00d4aa"/></svg>')
+  })
+
+  // Handle /mediaundefined — fallback for when mediaDomain is undefined
+  app.get('/mediaundefined*', (_req: Request, res: Response) => {
+    res.status(404).json({ error: 'not found' })
   })
 
   // Serve locally cached uploads
