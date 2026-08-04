@@ -190,26 +190,24 @@ export function createApp(): Application {
     res.json({ redirects: [] })
   })
 
-  // sitemaps stub — returns real nav items with correct shape for the Nav component
+  // sitemaps stub v3 — returns real nav items with correct shape for the Nav component
+  // Called as /config/cron/sitemaps/synapseV2/{country}/{lang} — country may be "undefined"
   // Nav reads: s.sitemap.filter(e => e.N.top) where N.top = show in top nav
-  // Shape: { PN: ProductName, RURL: RouteURL, RE: RedirectURL, A: Action, N: { top: bool }, PG: PageGroup }
-  app.get('/config/cron/sitemaps/synapseV2/:country/:lang', (_req: Request, res: Response) => {
-    res.json([
-      { PN: 'Sport',         RURL: '/sport',              RE: '', A: 'sport',         PG: 'sport',         N: { top: true  } },
-      { PN: 'Live',          RURL: '/sport/live',         RE: '', A: 'live',          PG: 'live',          N: { top: true  } },
-      { PN: 'Casino',        RURL: '/lobby/casino-games', RE: '', A: 'casino',        PG: 'casino',        N: { top: true  } },
-      { PN: 'Aviator',       RURL: '/aviator',            RE: '', A: 'aviator',       PG: 'aviator',       N: { top: true  } },
-      { PN: 'Live Casino',   RURL: '/lobby/live-casino',  RE: '', A: 'live casino',   PG: 'live-casino',   N: { top: true  } },
-      { PN: 'Lucky Numbers', RURL: '/lucky-numbers',      RE: '', A: 'lucky-numbers', PG: 'lucky-numbers', N: { top: true  } },
-      { PN: 'Betgames',      RURL: '/betgames',           RE: '', A: 'betgames',      PG: 'betgames',      N: { top: true  } },
-      { PN: 'Esports',       RURL: '/esports',            RE: '', A: 'esports',       PG: 'esports',       N: { top: true  } },
-      { PN: 'Virtuals',      RURL: '/virtuals',           RE: '', A: 'virtuals',      PG: 'virtuals',      N: { top: true  } },
-      { PN: 'Promotions',    RURL: '/promotions',         RE: '', A: 'promotions',    PG: 'promotions',    N: { top: true  } },
-    ])
-  })
-  app.get('/config/cron/sitemaps/synapseV2/:country', (_req: Request, res: Response) => {
-    res.json([])
-  })
+  const SITEMAP_ITEMS = [
+    { PN: 'Sport',         RURL: '/sport',              RE: '', A: 'sport',          PG: 'sport',         N: { top: true } },
+    { PN: 'Live',          RURL: '/sport/live',         RE: '', A: 'live',           PG: 'live',          N: { top: true } },
+    { PN: 'Casino',        RURL: '/lobby/casino-games', RE: '', A: 'casino',         PG: 'casino',        N: { top: true } },
+    { PN: 'Aviator',       RURL: '/aviator',            RE: '', A: 'aviator',        PG: 'aviator',       N: { top: true } },
+    { PN: 'Live Casino',   RURL: '/lobby/live-casino',  RE: '', A: 'live casino',    PG: 'live-casino',   N: { top: true } },
+    { PN: 'Lucky Numbers', RURL: '/lucky-numbers',      RE: '', A: 'lucky-numbers',  PG: 'lucky-numbers', N: { top: true } },
+    { PN: 'Betgames',      RURL: '/betgames',           RE: '', A: 'betgames',       PG: 'betgames',      N: { top: true } },
+    { PN: 'Esports',       RURL: '/esports',            RE: '', A: 'esports',        PG: 'esports',       N: { top: true } },
+    { PN: 'Virtuals',      RURL: '/virtuals',           RE: '', A: 'virtuals',       PG: 'virtuals',      N: { top: true } },
+    { PN: 'Promotions',    RURL: '/promotions',         RE: '', A: 'promotions',     PG: 'promotions',    N: { top: true } },
+  ]
+  app.get('/config/cron/sitemaps/synapseV2/:country/:lang', (_req: Request, res: Response) => { res.json(SITEMAP_ITEMS) })
+  app.get('/config/cron/sitemaps/synapseV2/:country',       (_req: Request, res: Response) => { res.json(SITEMAP_ITEMS) })
+  app.get('/config/cron/sitemaps',                          (_req: Request, res: Response) => { res.json(SITEMAP_ITEMS) })
   app.get('/config/cron/locales/synapse/:lang', async (req: Request, res: Response) => {
     try {
       const upstream = await fetch(
