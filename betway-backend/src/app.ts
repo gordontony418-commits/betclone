@@ -214,6 +214,43 @@ export function createApp(): Application {
     res.json({ redirects: [] })
   })
 
+  // ── Additional config stubs ────────────────────────────────────────────────
+  app.get('/config/cron/sports/:country/:lang', async (req: Request, res: Response) => {
+    try {
+      const r = await fetch(`https://config.betwayafrica.com/cron/sports/${req.params.country}/${req.params.lang}`, { signal: AbortSignal.timeout(8000) })
+      if (r.ok) { res.setHeader('Content-Type', 'application/json'); res.send(await r.text()); return }
+    } catch {}
+    res.json({ sports: [] })
+  })
+  app.get('/config/cron/newsboxitems/:country', async (req: Request, res: Response) => {
+    try {
+      const r = await fetch(`https://config.betwayafrica.com/cron/newsboxitems/${req.params.country}`, { signal: AbortSignal.timeout(8000) })
+      if (r.ok) { res.setHeader('Content-Type', 'application/json'); res.send(await r.text()); return }
+    } catch {}
+    res.json([])
+  })
+  app.get('/config/cron/sports-book/market-header-config/:app/:country', async (req: Request, res: Response) => {
+    try {
+      const r = await fetch(`https://config.betwayafrica.com/cron/sports-book/market-header-config/${req.params.app}/${req.params.country}`, { signal: AbortSignal.timeout(8000) })
+      if (r.ok) { res.setHeader('Content-Type', 'application/json'); res.send(await r.text()); return }
+    } catch {}
+    res.json({ sportMarkets: [] })
+  })
+  app.get('/config/cron/sport-streaming/:country', async (req: Request, res: Response) => {
+    try {
+      const r = await fetch(`https://config.betwayafrica.com/cron/sport-streaming/${req.params.country}?api-version=2.0`, { signal: AbortSignal.timeout(8000) })
+      if (r.ok) { res.setHeader('Content-Type', 'application/json'); res.send(await r.text()); return }
+    } catch {}
+    res.json({ streamableLeagues: [] })
+  })
+  app.get('/config/cron/esports/:country/:lang', async (req: Request, res: Response) => {
+    try {
+      const r = await fetch(`https://config.betwayafrica.com/cron/esports/${req.params.country}/${req.params.lang}`, { signal: AbortSignal.timeout(8000) })
+      if (r.ok) { res.setHeader('Content-Type', 'application/json'); res.send(await r.text()); return }
+    } catch {}
+    res.json({ sports: [] })
+  })
+
   // sitemaps stub v3 — returns real nav items with correct shape for the Nav component
   // Called as /config/cron/sitemaps/synapseV2/{country}/{lang} — country may be "undefined"
   // Nav reads: s.sitemap.filter(e => e.N.top) where N.top = show in top nav

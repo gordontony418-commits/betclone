@@ -75,6 +75,12 @@ contentRouter.get('/gmapi/Content/cmsget/', async (req: Request, res: Response):
     return
   }
 
+  // Use correct upstream host — may be content.betwayafrica.com or cms1.betwayafrica.com
+  const reqHost = (req.query.host as string) ?? ''
+  const upstreamHost = reqHost.includes('content.betwayafrica.com')
+    ? 'content.betwayafrica.com'
+    : CMS_UPSTREAM_HOST
+
   // 1. Serve from local JSON files first (fastest, always works)
   const local = getLocalCms(route)
   if (local) {
@@ -93,9 +99,9 @@ contentRouter.get('/gmapi/Content/cmsget/', async (req: Request, res: Response):
     }
   } catch { /* DB unavailable, continue */ }
 
-  // 3. Fetch from upstream — always use real CMS host
-  const qs = new URLSearchParams({ host: CMS_UPSTREAM_HOST, route, lang }).toString()
-  const upstreamUrl = `https://${CMS_UPSTREAM_HOST}/gmapi/Content/cmsget/?${qs}`
+  // 3. Fetch from upstream — use correct CMS host
+  const qs = new URLSearchParams({ host: upstreamHost, route, lang }).toString()
+  const upstreamUrl = `https://${upstreamHost}/gmapi/Content/cmsget/?${qs}`
 
   try {
     const upstream = await fetch(upstreamUrl, {
