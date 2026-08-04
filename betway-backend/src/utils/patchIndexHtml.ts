@@ -102,6 +102,10 @@ export function patchIndexHtml(force = false): void {
   // Force defaultCountry to ZA so the SPA doesn't derive 'OM' from the Render hostname
   html = html.replace(/"defaultCountry"\s*:\s*"[^"]*"/g, '"defaultCountry":"ZA"')
 
+  // Fix graphqlUrl — SPA derives brand/country from this domain (.co.tz → TZ, .co.za → ZA)
+  html = html.replace(/"graphqlUrl"\s*:\s*"[^"]*"/g, '"graphqlUrl":"https://kipem.betway.co.za/graphql"')
+  html = html.replace(/"avatarUrl"\s*:\s*"[^"]*"/g, '"avatarUrl":"https://kipem.betway.co.za"')
+
   // ── Inject CSS to hide deposit/withdraw UI ────────────────────────────────
   const DEPOSIT_HIDE_CSS = [
     '<style id="local-overrides">',
