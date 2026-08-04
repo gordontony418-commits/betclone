@@ -160,7 +160,7 @@ export function createApp(): Application {
         privacyUrl: '/privacy-policy',
         brandId: 'bd66ebe1-080b-4455-9094-bf0464d4adbf',
         regionCode: 'ZA',
-        // v2 — force rebuild
+        // build v4
       }],
       devConfig: { appAvailable: true, maintenanceMode: false },
       homepage: {
