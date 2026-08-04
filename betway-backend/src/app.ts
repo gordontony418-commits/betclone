@@ -190,12 +190,25 @@ export function createApp(): Application {
     res.json({ redirects: [] })
   })
 
-  // sitemaps stub — also handle undefined country
+  // sitemaps stub — returns real nav items with correct shape for the Nav component
+  // Nav reads: s.sitemap.filter(e => e.N.top) where N.top = show in top nav
+  // Shape: { PN: ProductName, RURL: RouteURL, RE: RedirectURL, A: Action, N: { top: bool }, PG: PageGroup }
   app.get('/config/cron/sitemaps/synapseV2/:country/:lang', (_req: Request, res: Response) => {
-    res.json({ sitemaps: [] })
+    res.json([
+      { PN: 'Sport',         RURL: '/sport',              RE: '', A: 'sport',         PG: 'sport',         N: { top: true  } },
+      { PN: 'Live',          RURL: '/sport/live',         RE: '', A: 'live',          PG: 'live',          N: { top: true  } },
+      { PN: 'Casino',        RURL: '/lobby/casino-games', RE: '', A: 'casino',        PG: 'casino',        N: { top: true  } },
+      { PN: 'Aviator',       RURL: '/aviator',            RE: '', A: 'aviator',       PG: 'aviator',       N: { top: true  } },
+      { PN: 'Live Casino',   RURL: '/lobby/live-casino',  RE: '', A: 'live casino',   PG: 'live-casino',   N: { top: true  } },
+      { PN: 'Lucky Numbers', RURL: '/lucky-numbers',      RE: '', A: 'lucky-numbers', PG: 'lucky-numbers', N: { top: true  } },
+      { PN: 'Betgames',      RURL: '/betgames',           RE: '', A: 'betgames',      PG: 'betgames',      N: { top: true  } },
+      { PN: 'Esports',       RURL: '/esports',            RE: '', A: 'esports',       PG: 'esports',       N: { top: true  } },
+      { PN: 'Virtuals',      RURL: '/virtuals',           RE: '', A: 'virtuals',      PG: 'virtuals',      N: { top: true  } },
+      { PN: 'Promotions',    RURL: '/promotions',         RE: '', A: 'promotions',    PG: 'promotions',    N: { top: true  } },
+    ])
   })
   app.get('/config/cron/sitemaps/synapseV2/:country', (_req: Request, res: Response) => {
-    res.json({ sitemaps: [] })
+    res.json([])
   })
   app.get('/config/cron/locales/synapse/:lang', async (req: Request, res: Response) => {
     try {
@@ -273,6 +286,25 @@ export function createApp(): Application {
   app.use('/influencer',   createMediaProxy('https://influencer-external-api.betwayafrica.com'))
   app.use('/jackpots-za',  createMediaProxy('https://jackpotza.ragingriver.io'))
   app.use('/casino-bonus', createMediaProxy('https://casinobonusing.betwayafrica.com'))
+
+  // ── Nav product icons — proxy from Kentico CDN ───────────────────────────
+  app.get('/icons/productnav/:icon', async (req: Request, res: Response) => {
+    const icon = req.params.icon
+    const url  = `https://media.betwayafrica.com/medialibraries/content.gmgamingsystems.com/Synapse/icons/productnav/${icon}`
+    try {
+      const upstream = await fetch(url, { signal: AbortSignal.timeout(8_000) })
+      if (upstream.ok) {
+        const buf = Buffer.from(await upstream.arrayBuffer())
+        res.setHeader('Content-Type', upstream.headers.get('content-type') ?? 'image/svg+xml')
+        res.setHeader('Cache-Control', 'public, max-age=86400')
+        res.send(buf)
+        return
+      }
+    } catch { /* fall through */ }
+    // Return a simple placeholder SVG so no broken icons appear
+    res.setHeader('Content-Type', 'image/svg+xml')
+    res.send('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#00d4aa"/></svg>')
+  })
 
   // Serve locally cached uploads
   app.get('/uploads/:filename', serveUploads)
