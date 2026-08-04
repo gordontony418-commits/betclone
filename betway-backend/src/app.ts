@@ -107,6 +107,16 @@ export function createApp(): Application {
   // Generic proxies
   app.use('/api',       createProxy({ pathPrefix: '/api',       target: config.API_DOMAIN,        stripPrefix: '/api' }))
   // /apic proxy is AFTER our specific stubs below
+  // ── Casino API stubs — games, lobby, etc. ────────────────────────────────
+  app.get('/casinoapi/api/v*/Games*', (_req: Request, res: Response) => {
+    res.json({ games: [], totalCount: 0, pageSize: 20, pageIndex: 0 })
+  })
+  app.get('/casinoapi/api/v*/Lobby*', (_req: Request, res: Response) => {
+    res.json({ categories: [], games: [] })
+  })
+  app.get('/casinoapi/api/v*/Categories*', (_req: Request, res: Response) => {
+    res.json([])
+  })
   app.use('/casinoapi', createProxy({ pathPrefix: '/casinoapi', target: config.CASINO_API_DOMAIN, stripPrefix: '/casinoapi' }))
   app.use('/signalr',   createProxy({ pathPrefix: '/signalr',   target: config.SIGNALR_DOMAIN,    stripPrefix: '/signalr' }))
   app.use('/promoapi',  createProxy({ pathPrefix: '/promoapi',  target: config.PROMO_API_DOMAIN,  stripPrefix: '/promoapi' }))
@@ -192,6 +202,16 @@ export function createApp(): Application {
           IsTaxHidden: false,
           ShowCountryFlag: false,
           IsStreamingEnabled: false,
+          IsCasinoEnabled: true,
+          IsLiveCasinoEnabled: true,
+          IsVirtualsEnabled: true,
+          IsEsportsEnabled: true,
+          IsBetgamesEnabled: true,
+          IsLuckyNumbersEnabled: true,
+          IsAviatorEnabled: true,
+          IsSportsbookEnabled: true,
+          IsLiveSportEnabled: true,
+          IsPromotionsEnabled: true,
         },
       },
       homepage: {
