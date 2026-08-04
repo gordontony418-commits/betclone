@@ -2,72 +2,48 @@
  * static.ts
  *
  * Serves the static Betway Nigeria SPA and CDN/CMS asset folders.
- * Mount order matters:
- *   1. /cdn.betwayafrica.com/ → cdn.betwayafrica.com/
- *   2. /cms1.betwayafrica.com/ → cms1.betwayafrica.com/
- *   3. /  → www.betway.com.ng/   (catch-all SPA)
+ * On Render: static files are copied into betway-backend/ during build.
+ * Locally: static files live in the repo root (parent of betway-backend).
  */
 
 import express, { Router, Request, Response } from 'express'
 import path from 'path'
 import fs from 'fs'
 
-// On Render: static files are copied into betway-backend/ during build via render.yaml
-// Locally: static files live in the repo root (parent of betway-backend)
-const backendDir = path.resolve(__dirname, '../..')   // betway-backend/ (compiled: dist/routes → ../..)
-const repoRoot   = path.resolve(__dirname, '../../..') // betway-clone/
+// compiled: dist/routes/static.js → __dirname = dist/routes
+// backendDir = betway-backend/  (dist/routes → ../..)
+// repoRoot   = betway-clone/    (dist/routes → ../../..)
+const backendDir = path.resolve(__dirname, '../..')
+const repoRoot   = path.resolve(__dirname, '../../..')
 
 const ROOT = fs.existsSync(path.join(backendDir, 'www.betway.com.ng'))
-  ? backendDir   // Render: files copied here during build
-  : repoRoot     // Local: files in repo root
+  ? backendDir  // Render: files copied here during build
+  : repoRoot    // Local: files in repo root
 
 console.log(`[static] Root resolved to: ${ROOT}`)
-  }
-  // fallback
-  console.warn('[static] Could not find www.betway.com.ng — using default path')
+
 export const staticRouter: Router = Router()
 
-// ── CDN assets ───────────────────────────────────────────────────────────────
+// ── CDN assets ────────────────────────────────────────────────────────────────
 staticRouter.use(
   '/cdn.betwayafrica.com',
-  express.static(path.join(ROOT, 'cdn.betwayafrica.com'), {
-    fallthrough: true,
-    setHeaders: setContentType,
-  })
+  express.static(path.join(ROOT, 'cdn.betwayafrica.com'), { fallthrough: true })
 )
 
-// ── CMS / Kentico assets ─────────────────────────────────────────────────────
+// ── CMS / Kentico assets ──────────────────────────────────────────────────────
 staticRouter.use(
   '/cms1.betwayafrica.com',
-  express.static(path.join(ROOT, 'cms1.betwayafrica.com'), {
-    fallthrough: true,
-    setHeaders: setContentType,
-  })
+  express.static(path.join(ROOT, 'cms1.betwayafrica.com'), { fallthrough: true })
 )
 
-// ── SPA root ─────────────────────────────────────────────────────────────────
+// ── SPA root ──────────────────────────────────────────────────────────────────
 const spaRoot = path.join(ROOT, 'www.betway.com.ng')
 
-staticRouter.use(
-  '/',
-  express.static(spaRoot, {
-    fallthrough: true,
-    index: 'index.html',
-    setHeaders: setContentType,
-  })
-)
+staticRouter.use('/', express.static(spaRoot, { fallthrough: true, index: 'index.html' }))
 
-// ── SPA fallback — serve index.html for all unmatched GET requests ───────────
-staticRouter.get('*', (req: Request, res: Response) => {
-  const indexPath = path.join(spaRoot, 'index.html')
-  res.sendFile(indexPath, (err) => {
-    if (err) {
-      res.status(404).json({ error: 'Not found' })
-    }
+// ── SPA fallback — serve index.html for all unmatched GET requests ────────────
+staticRouter.get('*', (_req: Request, res: Response) => {
+  res.sendFile(path.join(spaRoot, 'index.html'), (err) => {
+    if (err) res.status(404).json({ error: 'Not found' })
   })
 })
-
-/** Let express.static derive Content-Type from file extension */
-function setContentType(_res: express.Response, _filePath: string): void {
-  // express.static does this automatically — no manual override needed
-}
