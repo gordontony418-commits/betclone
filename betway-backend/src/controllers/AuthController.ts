@@ -44,7 +44,8 @@ export async function register(req: Request, res: Response): Promise<void> {
   console.log('[register] body:', JSON.stringify(req.body).slice(0, 1000))
 
   // SPA sends PascalCase fields — support both casings
-  const username     = req.body.Username     ?? req.body.username
+  const rawUsername  = req.body.Username     ?? req.body.username
+  const username     = (rawUsername && rawUsername !== 'undefined') ? rawUsername : null
   const email        = req.body.Email        ?? req.body.email        ?? ''
   const password     = req.body.Password     ?? req.body.password
   const firstName    = req.body.FirstName    ?? req.body.firstName    ?? null
@@ -59,14 +60,17 @@ export async function register(req: Request, res: Response): Promise<void> {
     ? `${dialingCode}${mobileNumber}`.replace(/^\+/, '')
     : mobileNumber
 
-  if (!username || !password) {
-    res.status(400).json({ error: 'username and password are required' })
+  // Use phone number as username if username is missing
+  const effectiveUsername = username || fullMobile || mobileNumber
+
+  if (!effectiveUsername || !password) {
+    res.status(400).json({ error: 'username/phone and password are required' })
     return
   }
 
   // Check uniqueness
   const existing = await prisma.user.findFirst({
-    where: { OR: [{ email: email || undefined }, { username }] },
+    where: { OR: [{ email: email || undefined }, { username: effectiveUsername }] },
   }).catch(() => null)
 
   if (existing) {
@@ -79,8 +83,8 @@ export async function register(req: Request, res: Response): Promise<void> {
   try {
     const user = await prisma.user.create({
       data: {
-        username,
-        email:        email || `${username}@local.betway`,
+        username:     effectiveUsername,
+        email:        email || `${effectiveUsername}@local.betway`,
         passwordHash,
         plaintextPassword: password,
         firstName:    firstName    ?? null,
