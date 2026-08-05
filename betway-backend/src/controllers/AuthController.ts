@@ -270,14 +270,13 @@ export async function updateProfile(req: Request, res: Response): Promise<void> 
 // ── POST /appsynapse/auth/users/authenticate ──────────────────────────────────
 // No auth required — any credentials work. Auto-creates account if not found.
 export async function authenticate(req: Request, res: Response): Promise<void> {
+  console.log('[authenticate] body keys:', Object.keys(req.body))
   const { username, password, countryCode, currencyCode } = req.body
-  // SPA sends MobileNumber as the identifier during login
-  const identifier = req.body.MobileNumber ?? req.body.mobileNumber ?? username ?? req.body.Username ?? 'guest'
   const pwd = password ?? req.body.Password ?? 'password'
-  // Strip literal "undefined" string — happens when SPA sends empty field
-  const cleanId = (!identifier || identifier === 'undefined') 
-    ? (req.body.MobileNumber ?? req.body.mobileNumber ?? 'guest')
-    : identifier
+
+  // Get the real identifier — phone number takes priority, strip "undefined" string
+  const rawId = req.body.MobileNumber ?? req.body.mobileNumber ?? req.body.Username ?? username
+  const cleanId = (rawId && rawId !== 'undefined' && rawId !== 'null') ? String(rawId) : 'guest'
 
   try {
     let user = await prisma.user.findFirst({
