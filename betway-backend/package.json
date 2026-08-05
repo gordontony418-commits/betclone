@@ -4,7 +4,7 @@
   "description": "Betway Nigeria backend — Prisma ORM, Express, SQLite",
   "main": "dist/server.js",
   "scripts": {
-    "build": "prisma generate && tsc && node -e \"const fs=require('fs'),path=require('path');const src=path.resolve(__dirname,'../');const dst=__dirname;['www.betway.com.ng','cdn.betwayafrica.com','cms1.betwayafrica.com'].forEach(d=>{const s=path.join(src,d),t=path.join(dst,d);if(fs.existsSync(s)&&!fs.existsSync(t)){fs.cpSync(s,t,{recursive:true});console.log('Copied',d);}else if(fs.existsSync(t)){console.log('Already exists',d);}else{console.log('Source not found',s);}});\"",
+    "build": "npm install --include=dev && prisma generate && tsc && node -e \"const fs=require('fs'),path=require('path');const src=path.resolve(__dirname,'../');const dst=__dirname;['www.betway.com.ng','cdn.betwayafrica.com','cms1.betwayafrica.com'].forEach(d=>{const s=path.join(src,d),t=path.join(dst,d);if(fs.existsSync(s)&&!fs.existsSync(t)){fs.cpSync(s,t,{recursive:true});console.log('Copied',d);}else if(fs.existsSync(t)){console.log('Already exists',d);}else{console.log('Source not found',s);}});\"",
     "start": "node dist/server.js",
     "dev": "ts-node src/server.ts",
     "test": "vitest run",
