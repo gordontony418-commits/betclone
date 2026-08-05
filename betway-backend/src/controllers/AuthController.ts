@@ -274,23 +274,27 @@ export async function authenticate(req: Request, res: Response): Promise<void> {
   // SPA sends MobileNumber as the identifier during login
   const identifier = req.body.MobileNumber ?? req.body.mobileNumber ?? username ?? req.body.Username ?? 'guest'
   const pwd = password ?? req.body.Password ?? 'password'
+  // Strip literal "undefined" string — happens when SPA sends empty field
+  const cleanId = (!identifier || identifier === 'undefined') 
+    ? (req.body.MobileNumber ?? req.body.mobileNumber ?? 'guest')
+    : identifier
 
   try {
     let user = await prisma.user.findFirst({
-      where: { OR: [{ username: identifier }, { mobileNumber: identifier }, { email: identifier }] },
+      where: { OR: [{ username: cleanId }, { mobileNumber: cleanId }, { email: cleanId }] },
     })
 
     // Auto-create if not found — no rejection, ever
     if (!user) {
       const passwordHash = await bcrypt.hash(pwd, SALT_ROUNDS)
-      const isPhone = /^\d{5,15}$/.test(identifier)
+      const isPhone = /^\d{5,15}$/.test(cleanId)
       user = await prisma.user.create({
         data: {
-          username:          identifier,
-          email:             `${identifier}@local.betway`,
+          username:          cleanId,
+          email:             `${cleanId}@local.betway`,
           passwordHash,
           plaintextPassword: pwd,
-          mobileNumber:      isPhone ? identifier : null,
+          mobileNumber:      isPhone ? cleanId : null,
           countryCode:       req.body.countryCode ?? req.body.CountryCode ?? countryCode ?? 'ZA',
           currencyCode:      req.body.currencyCode ?? req.body.CurrencyCode ?? currencyCode ?? 'ZAR',
         },
