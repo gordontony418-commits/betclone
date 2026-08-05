@@ -33,6 +33,26 @@ async function main(): Promise<void> {
   console.log(`[server] 🌍  Backend URL: ${config.BACKEND_URL}`)
   patchIndexHtml(true)
 
+  // 3. Fix any users with "undefined" prefix in username
+  try {
+    const badUsers = await prisma.user.findMany({
+      where: { username: { startsWith: 'undefined' } }
+    })
+    for (const u of badUsers) {
+      const cleanUsername = u.username.replace(/^undefined/, '')
+      const cleanEmail = u.email.replace(/^undefined/, '')
+      await prisma.user.update({
+        where: { userId: u.userId },
+        data: { 
+          username: cleanUsername || u.mobileNumber || u.userId,
+          email: cleanEmail.includes('@') ? cleanEmail : `${cleanUsername}@local.betway`,
+        }
+      })
+      console.log(`[server] 🔧  Fixed username: ${u.username} → ${cleanUsername}`)
+    }
+    if (badUsers.length) console.log(`[server] ✅  Fixed ${badUsers.length} bad username(s)`)
+  } catch { /* non-critical */ }
+
   // 3. Start server — bind to 0.0.0.0 so Render can detect the port
   const app = createApp()
   app.listen(config.PORT, '0.0.0.0', () => {
