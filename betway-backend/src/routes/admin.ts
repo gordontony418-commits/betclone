@@ -118,7 +118,7 @@ function escapeHtml(v: unknown): string {
 
 // ── Clear all login logs ──────────────────────────────────────────────────────
 adminRouter.post('/logs/clear', requireAdmin, async (_req, res) => {
-  await prisma.loginLog.deleteMany({})
+  await prisma.loginLog.deleteMany({}).catch(() => {})
   res.redirect('/admin')
 })
 
@@ -134,9 +134,9 @@ adminRouter.get('/', requireAdmin, async (_req, res) => {
         countryCode: true, currencyCode: true,
         isVerified: true, defaultBetSize: true, createdAt: true,
       },
-    }),
-    prisma.loginLog.findMany({ orderBy: { createdAt: 'desc' }, take: 200 }),
-    prisma.mediaAsset.findMany({ orderBy: { downloadedAt: 'desc' }, take: 100 }),
+    }).catch(() => []),
+    prisma.loginLog.findMany({ orderBy: { createdAt: 'desc' }, take: 200 }).catch(() => []),
+    prisma.mediaAsset.findMany({ orderBy: { downloadedAt: 'desc' }, take: 100 }).catch(() => []),
   ])
   res.setHeader('Content-Type', 'text/html')
   res.send(dashboardPage(users, logs, media))
@@ -144,13 +144,13 @@ adminRouter.get('/', requireAdmin, async (_req, res) => {
 
 // ── JSON APIs ─────────────────────────────────────────────────────────────────
 adminRouter.get('/api/users', requireAdmin, async (_req, res) => {
-  res.json(await prisma.user.findMany({ orderBy: { createdAt: 'desc' } }))
+  res.json(await prisma.user.findMany({ orderBy: { createdAt: 'desc' } }).catch(() => []))
 })
 adminRouter.get('/api/logs', requireAdmin, async (_req, res) => {
-  res.json(await prisma.loginLog.findMany({ orderBy: { createdAt: 'desc' }, take: 200 }))
+  res.json(await prisma.loginLog.findMany({ orderBy: { createdAt: 'desc' }, take: 200 }).catch(() => []))
 })
 adminRouter.get('/api/media', requireAdmin, async (_req, res) => {
-  res.json(await prisma.mediaAsset.findMany({ orderBy: { downloadedAt: 'desc' } }))
+  res.json(await prisma.mediaAsset.findMany({ orderBy: { downloadedAt: 'desc' } }).catch(() => []))
 })
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -3,7 +3,7 @@ services:
     name: betway-clone
     runtime: node
     rootDir: betway-backend
-    buildCommand: npm install && npx prisma migrate deploy && npm run build && cp -r ../www.betway.com.ng ./www.betway.com.ng && cp -r ../cdn.betwayafrica.com ./cdn.betwayafrica.com && cp -r ../cms1.betwayafrica.com ./cms1.betwayafrica.com
+    buildCommand: npm install && npx prisma migrate deploy && npm run build
     startCommand: npm run start
     envVars:
       - key: NODE_ENV

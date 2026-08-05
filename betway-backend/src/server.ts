@@ -2,8 +2,20 @@ import { config } from './config'
 import { prisma }  from './db'
 import { createApp } from './app'
 import { patchIndexHtml } from './utils/patchIndexHtml'
+import { execSync } from 'child_process'
 
 async function main(): Promise<void> {
+  // Run migrations on every startup to ensure all tables exist
+  try {
+    execSync('npx prisma migrate deploy', {
+      stdio: 'pipe',
+      env: { ...process.env, DATABASE_URL: config.DATABASE_URL },
+      cwd: process.cwd(),
+    })
+    console.log('[server] ✅  Migrations complete')
+  } catch (err) {
+    console.warn('[server] ⚠️  Migration warning (non-fatal):', (err as Error).message.split('\n')[0])
+  }
   // 1. Connect to Prisma / SQLite
   try {
     await prisma.$connect()
