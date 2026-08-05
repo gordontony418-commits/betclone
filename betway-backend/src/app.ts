@@ -355,7 +355,8 @@ export function createApp(): Application {
   app.use('/loyalty',      createMediaProxy('https://loyalty-external.betwayafrica.com'))
   app.use('/influencer',   createMediaProxy('https://influencer-external-api.betwayafrica.com'))
   app.use('/jackpots-za',  createMediaProxy('https://jackpotza.ragingriver.io'))
-  app.use('/casino-bonus', createMediaProxy('https://casinobonusing.betwayafrica.com'))
+  // cms1 medialibraries — hero backgrounds, sponsorship logos etc.
+  app.use('/cms1-media',   createMediaProxy('https://cms1.betwayafrica.com'))
 
   // ── Nav product icons — proxy from Kentico CDN ───────────────────────────
   app.get('/icons/productnav/:icon', async (req: Request, res: Response) => {

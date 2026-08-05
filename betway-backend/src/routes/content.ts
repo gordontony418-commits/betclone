@@ -140,6 +140,16 @@ contentRouter.get('/gmapi/Content/cmsget/', async (req: Request, res: Response):
 
 // ── Any other /cms/* subpath → proxy to real CMS ─────────────────────────────
 contentRouter.use(
+  '/medialibraries',
+  createProxy({
+    pathPrefix:  '/cms/medialibraries',
+    target:      'https://cms1.betwayafrica.com',
+    stripPrefix: '/cms',
+    persist:     false,
+  })
+)
+
+contentRouter.use(
   createProxy({
     pathPrefix:  '/cms',
     target:      config.CMS_DOMAIN,
