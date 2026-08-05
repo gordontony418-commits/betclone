@@ -42,6 +42,7 @@ function buildDomainMap(backendUrl: string): Record<string, string> {
     'https://media.betwayafrica.com/': `${backendUrl}/media`,
     'https://jackpotza.ragingriver.io': `${backendUrl}/jackpots-za`,
     'https://casinobonusing.betwayafrica.com/api/': `${backendUrl}/casino-bonus`,
+    'https://casinobonusing.betwayafrica.com': `${backendUrl}/casino-bonus`,
   }
 }
 
