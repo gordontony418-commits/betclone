@@ -3,7 +3,7 @@ services:
     name: betway-clone
     runtime: node
     rootDir: betway-backend
-    buildCommand: npx prisma migrate deploy && npm run build
+    buildCommand: npx prisma db push --accept-data-loss && npm run build
     startCommand: npm run start
     envVars:
       - key: NODE_ENV
@@ -16,6 +16,10 @@ services:
         generateValue: true
       - key: ADMIN_PASSWORD
         value: admin@betway2024
+      - key: TURSO_DATABASE_URL
+        value: libsql://betway-gordontony418-commits.aws-ap-south-1.turso.io
+      - key: TURSO_AUTH_TOKEN
+        value: eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODU5MzY1NzksImlkIjoiMDE5ZmQyMWItNGMwMS03MzI3LTg1MTgtYjNmMzkxODVjMjZhIiwia2lkIjoiUFhnbnlabVJMbFZNRUNkMmhJMDFpSWNGLU5ubUs0ekRUZ283VXBJVVBjayIsInJpZCI6ImFmYTNlZTA5LTJhZjctNDJlNS1hOTAzLTQ2YTVhN2ZiZmQ5YiJ9.nADbV8YqGddIeyP4wPIdQate0E2hBohVAKggIWtcVnl7mS9gRUdpKPHLz9DlrE-8JKcIfAiqjXaRaNlusBZLBQ
       - key: SPORTS_DOMAIN
         value: https://feeds-roa2.betwayafrica.com/br/_apis/sport
       - key: BETTING_DOMAIN

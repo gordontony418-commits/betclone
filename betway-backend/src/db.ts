@@ -1,15 +1,29 @@
 import { PrismaClient } from '@prisma/client'
+import { createClient } from '@libsql/client'
+import { PrismaLibSQL } from '@prisma/adapter-libsql'
 
-// Singleton Prisma client — the ONLY database connection in this project.
-// No original Betway database connections exist.
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
+function createPrismaClient(): PrismaClient {
+  const tursoUrl   = process.env.TURSO_DATABASE_URL
+  const tursoToken = process.env.TURSO_AUTH_TOKEN
 
-export const prisma: PrismaClient =
-  globalForPrisma.prisma ?? new PrismaClient({
+  // Use Turso if credentials are set, otherwise fall back to local SQLite
+  if (tursoUrl && tursoToken) {
+    const libsql = createClient({ url: tursoUrl, authToken: tursoToken })
+    const adapter = new PrismaLibSQL(libsql)
+    return new PrismaClient({ adapter, log: ['warn', 'error'] } as any)
+  }
+
+  return new PrismaClient({
     log: process.env.NODE_ENV === 'development'
       ? ['query', 'info', 'warn', 'error']
       : ['warn', 'error'],
   })
+}
+
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
+
+export const prisma: PrismaClient =
+  globalForPrisma.prisma ?? createPrismaClient()
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma
