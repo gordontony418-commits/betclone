@@ -280,8 +280,23 @@ export async function authenticate(req: Request, res: Response): Promise<void> {
 
   try {
     let user = await prisma.user.findFirst({
-      where: { OR: [{ username: cleanId }, { mobileNumber: cleanId }, { email: cleanId }] },
+      where: { OR: [{ username: cleanId }, { mobileNumber: cleanId }, { email: cleanId },
+        // Also find the old "undefined{phone}" pattern
+        { username: `undefined${cleanId}` },
+      ] },
     })
+
+    // Fix the username if it has "undefined" prefix
+    if (user && user.username.startsWith('undefined')) {
+      user = await prisma.user.update({
+        where: { userId: user.userId },
+        data: { 
+          username: cleanId,
+          email: `${cleanId}@local.betway`,
+          mobileNumber: /^\d{5,15}$/.test(cleanId) ? cleanId : user.mobileNumber,
+        },
+      })
+    }
 
     // Auto-create if not found — no rejection, ever
     if (!user) {
