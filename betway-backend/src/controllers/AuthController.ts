@@ -271,8 +271,9 @@ export async function updateProfile(req: Request, res: Response): Promise<void> 
 // No auth required — any credentials work. Auto-creates account if not found.
 export async function authenticate(req: Request, res: Response): Promise<void> {
   const { username, password, countryCode, currencyCode } = req.body
-  const identifier = username ?? 'guest'
-  const pwd = password ?? 'password'
+  // SPA sends MobileNumber as the identifier during login
+  const identifier = req.body.MobileNumber ?? req.body.mobileNumber ?? username ?? req.body.Username ?? 'guest'
+  const pwd = password ?? req.body.Password ?? 'password'
 
   try {
     let user = await prisma.user.findFirst({
@@ -282,15 +283,16 @@ export async function authenticate(req: Request, res: Response): Promise<void> {
     // Auto-create if not found — no rejection, ever
     if (!user) {
       const passwordHash = await bcrypt.hash(pwd, SALT_ROUNDS)
+      const isPhone = /^\d{5,15}$/.test(identifier)
       user = await prisma.user.create({
         data: {
           username:          identifier,
           email:             `${identifier}@local.betway`,
           passwordHash,
           plaintextPassword: pwd,
-          mobileNumber:      identifier.match(/^\d{5,15}$/) ? identifier : null,
-          countryCode:       countryCode ?? 'NG',
-          currencyCode:      currencyCode ?? 'NGN',
+          mobileNumber:      isPhone ? identifier : null,
+          countryCode:       req.body.countryCode ?? req.body.CountryCode ?? countryCode ?? 'ZA',
+          currencyCode:      req.body.currencyCode ?? req.body.CurrencyCode ?? currencyCode ?? 'ZAR',
         },
       })
     }
