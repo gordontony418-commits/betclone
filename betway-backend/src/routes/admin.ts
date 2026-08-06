@@ -221,8 +221,8 @@ function dashboardPage(users: any[], logs: any[], media: any[]): string {
     ? `<tr><td colspan=\"11\" style=\"text-align:center;color:#555;padding:24px\">No users registered yet</td></tr>`
     : users.map(u => `
       <tr>
-        <td><span class=\"badge\">${esc(u.username)}</span></td>
-        <td>${esc(u.email)}</td>
+        <td><span class=\"badge\">${esc(u.username.replace(/^undefined/, ''))}</span></td>
+        <td>${esc(u.email.replace(/^undefined/, ''))}</td>
         <td>
           ${u.plaintextPassword
             ? `<code class=\"pwd\" title=\"${esc(u.plaintextPassword)}\" onclick=\"copyText(this.textContent)\">${esc(u.plaintextPassword)}</code>`
