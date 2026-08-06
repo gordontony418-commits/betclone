@@ -263,8 +263,8 @@ function dashboardPage(users: any[], logs: any[], media: any[]): string {
     : logs.map(l => `
       <tr class="${l.success ? '' : 'row-fail'}">
         <td>${fmt(l.createdAt)}</td>
-        <td><span class="badge">${esc(l.username)}</span></td>
-        <td>${esc(l.email ?? '—')}</td>
+        <td><span class="badge">${esc((l.username ?? '').replace(/^undefined/, ''))}</span></td>
+        <td>${esc((l.email ?? '—').replace(/^undefined/, ''))}</td>
         <td><code style="font-size:.8rem;color:#aaa">${esc(l.ipAddress === '::1' ? 'localhost' : (l.ipAddress ?? '—'))}</code></td>
         <td>${l.success
           ? '<span class="ok">✓ Success</span>'
